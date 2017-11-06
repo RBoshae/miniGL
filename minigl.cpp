@@ -36,6 +36,47 @@ typedef vec<MGLfloat,3> vec3;   //data structure storing a 3 dimensional vector,
 typedef vec<MGLfloat,2> vec2;   //data structure storing a 2 dimensional vector, see vec.h
 
 /**
+ * Added Data Structures
+ */
+
+// current_color
+struct current_color {
+  vec3 current_color;
+};
+
+// vertex
+struct vertex {
+
+  // For now vertext contains rgb floats to represent color.
+  vec3 color; // How do you assign values to datatypes of vec3?
+  vec4 pos;   // Similarly, how do you assign values of datatypes in vec4?
+};
+
+struct triangle {
+    vec3 vertex_one;
+    vec3 vertex_two;
+    vec3 vertex_three;
+};
+
+struct quad {
+    vec3 vertex_one;
+    vec3 vertex_two;
+    vec3 vertex_three;
+    vec3 vertex_four;
+};
+
+// List of vertcies
+struct list_of_verticies {
+    vector<vertex> list_of_verticies;
+};
+
+// List of Triangles
+struct list_of_triangles {
+    vector<triangle> list_of_triangles;
+};
+
+///////////////// End of Added Data Structures //////////////////////
+/**
  * Standard macro to report errors
  */
 inline void MGL_ERROR(const char* description) {
