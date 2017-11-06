@@ -1,0 +1,9 @@
+# Ignore .d files
+*.d
+
+# Ignore .o files
+*.o
+
+# Ignore application files
+minigl
+minigl-nogl
