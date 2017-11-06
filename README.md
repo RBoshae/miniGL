@@ -1,6 +1,6 @@
 # MiniGL
 
-## In this project, I implement a simplified 3D rendering pipeline (with flat shading). This will consist of several parts, introduced through a series of tests:
+In this project, I implement a simplified 3D rendering pipeline (with flat shading). This will consist of several parts, introduced through a series of tests:
 
 -Vertex and viewing transformations
 -Rasterization and interpolation
@@ -8,7 +8,7 @@
 -Using a z-buffer for hidden surfaces
 
 
-#Troubleshoot
+# Troubleshoot
 To resolve the following error:
   g++ -Wall -g -O3 -std=c++11   -c -o dump_png.o dump_png.cpp
   dump_png.cpp:1:17: fatal error: png.h: No such file or directory
