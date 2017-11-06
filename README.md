@@ -20,3 +20,11 @@ Do:
   sudo apt-get install libpng-dev
 
     
+License
+----
+
+MIT
+   [miniGL]: <https://github.com/RBoshae/miniGL>
+   [git-repo-url]: <https://github.com/RBoshae/miniGL.git>
+   [rick boshae]: <https://github.com/Rboshae>
+   
