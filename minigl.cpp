@@ -39,14 +39,8 @@ typedef vec<MGLfloat,2> vec2;   //data structure storing a 2 dimensional vector,
  * Added Data Structures
  */
 
-// current_color
-struct current_color {
-  vec3 current_color;
-};
-
 // vertex
 struct vertex {
-
   // For now vertext contains rgb floats to represent color.
   vec3 color; // How do you assign values to datatypes of vec3?
   vec4 pos;   // Similarly, how do you assign values of datatypes in vec4?
@@ -64,18 +58,16 @@ struct quad {
     vec3 vertex_three;
     vec3 vertex_four;
 };
-
-// List of vertcies
-struct list_of_verticies {
-    vector<vertex> list_of_verticies;
-};
-
-// List of Triangles
-struct list_of_triangles {
-    vector<triangle> list_of_triangles;
-};
-
 ///////////////// End of Added Data Structures //////////////////////
+
+/**
+ * Added Global Variables
+ */
+vec3 current_color;                    // current color of vertix
+MGLpoly_mode draw_mode;                // Variable set by user to indicate what shape is being drawn.
+vector<vertex> list_of_verticies;      // List of vertices pusdhed in from vertex data structure.
+vector<triangle> list_of_triangles;    // List of triangles built from list of verticies.
+
 /**
  * Standard macro to report errors
  */
