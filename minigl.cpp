@@ -101,14 +101,41 @@ void mglReadPixels(MGLsize width,
  */
 void mglBegin(MGLpoly_mode mode)
 {
+  draw_mode = mode;          // Set draw mode specified by user.
+  list_of_verticies.clear();   // Be nice and clear list of verticies for user.
+  list_of_triangles.clear();   // Be nice and clear list of traingles for user.
 }
-
 
 /**
  * Stop specifying the vertices for a group of primitives.
  */
 void mglEnd()
 {
+  switch (draw_mode) {
+    // Convert list_of_verticies into list_of_triangles.
+    case MGL_TRIANGLES :
+      for(unsigned int i = 0; i < list_of_verticies.size(); i+=3) {
+        triangle current_triangle;   // current_triangle represents the triangle about the be built
+        current_triangle.vertex_one   = list_of_verticies.at(i);
+        current_triangle.vertex_two   = list_of_verticies.at(i + 1);
+        current_triangle.vertex_three = list_of_verticies.at(i + 2);
+
+        // Push fully built triangle onto list_of_triangles vector.
+        list_of_triangles.push_back(current_triangle);
+      }
+    break;
+    // Convert list_of_verticies (which represents Quads) into list_of_triangles.
+    case MGL_QUADS :
+    for(unsigned int i = 0; i < list_of_verticies.size(); i+=3) {
+      triangle current_triangle;   // current_triangle represents the triangle about the be built
+      current_triangle.vertex_one   = list_of_verticies.at(i);
+      current_triangle.vertex_two   = list_of_verticies.at(i + 1);
+      current_triangle.vertex_three = list_of_verticies.at(i + 2);
+
+      list_of_triangles.push_back(current_triangle); // Push fully built triangle onto list_of_triangles vector.
+    }
+    break;
+  }
 }
 
 /**
