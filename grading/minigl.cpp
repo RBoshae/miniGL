@@ -93,7 +93,100 @@ void mglReadPixels(MGLsize width,
                    MGLsize height,
                    MGLpixel *data)
 {
+  cout << "In mglReadPixels\n";  // Debugging
   // We're given the framebuffer and our goal is just to fill the buffer. We def do not want to clear vertex information.
+
+  triangle current_triangle; // Used to store a copy of a triangle from a 'list_of_triangles'
+  // Begin by iterating through the list of triangle.
+  cout << "list_of_triangles.size():" << list_of_triangles.size() << endl;  // Debugging
+  for (unsigned int i = 0; i < list_of_triangles.size(); i++){
+    cout << "In for loop\n";  // Debugging
+    // calculate the pixel coordinates of the triangle
+    // determine whether a pixel in the image is inside the triangle transformed to the pixel coordinates
+    // you can transform a vertex (x,y) of a triangle to pixel coordinates using
+      // i = (x + 1) * width / 2;
+      // j = (y + 1) * height / 2;
+    current_triangle = list_of_triangles[i];
+    // Transform 'current_triangle' from object space to screen space
+      // Vertex One Transform
+    current_triangle.vertex_one.pos[0] = (current_triangle.vertex_one.pos[0]+1) * width / 2;
+    current_triangle.vertex_one.pos[1] = (current_triangle.vertex_one.pos[1]+1) * height / 2;
+    // current_triangle.vertex_one.pos[2] = (current_triangle.vertex_one.pos[2]+1) * width / 2;
+      // Vertex Two Transform
+    current_triangle.vertex_two.pos[0] = (current_triangle.vertex_two.pos[0]+1) * width / 2;
+    current_triangle.vertex_two.pos[1] = (current_triangle.vertex_two.pos[1]+1) * height / 2;
+    // current_triangle.vertex_two.pos[2] = (current_triangle.vertex_two.pos[2]+1) * width / 2;
+      // Vertex Three Transform
+    current_triangle.vertex_three.pos[0] = (current_triangle.vertex_three.pos[0]+1) * width / 2;
+    current_triangle.vertex_three.pos[1] = (current_triangle.vertex_three.pos[1]+1) * height / 2;
+    // current_triangle.vertex_three.pos[2] = (current_triangle.vertex_three.pos[2]+1) * width / 2;
+
+    // Create the bounding box for 'current_triangle'. To create the bounding box find Xmin, Xmax, Ymin, Ymax
+    MGLint bounding_box_x_min = (MGLint)floor(min(current_triangle.vertex_one.pos[0], min(current_triangle.vertex_two.pos[0],current_triangle.vertex_three.pos[0]))); // Find Xmin
+    MGLint bounding_box_x_max = (MGLint)ceil(max(current_triangle.vertex_one.pos[0], max(current_triangle.vertex_two.pos[0],current_triangle.vertex_three.pos[0]))); // Find Xmax
+    MGLint bounding_box_y_min = (MGLint)floor(min(current_triangle.vertex_one.pos[1], min(current_triangle.vertex_two.pos[1],current_triangle.vertex_three.pos[1]))); // Find Ymin
+    MGLint bounding_box_y_max = (MGLint)ceil(max(current_triangle.vertex_one.pos[1], max(current_triangle.vertex_two.pos[1],current_triangle.vertex_three.pos[1]))); // Find Ymax
+
+    // Determine the area of 'current_triangle'. Since I am working in two-dimensions, for now I will store the x and y values from each vertex in a new variable.
+    vec3 vector_one_to_vector_two    = vec3(current_triangle.vertex_two.pos[0], current_triangle.vertex_two.pos[1], current_triangle.vertex_two.pos[3]) - vec3(current_triangle.vertex_one.pos[0], current_triangle.vertex_one.pos[1], current_triangle.vertex_one.pos[2]);
+
+    vec3 vector_one_to_vector_three  = vec3(current_triangle.vertex_three.pos[0], current_triangle.vertex_three.pos[1], current_triangle.vertex_three.pos[2]) - vec3(current_triangle.vertex_one.pos[0], current_triangle.vertex_one.pos[1], current_triangle.vertex_one.pos[2]);
+
+    vec3 vector_two_to_vector_three  = vec3(current_triangle.vertex_three.pos[0], current_triangle.vertex_three.pos[1], current_triangle.vertex_three.pos[2]) - vec3(current_triangle.vertex_two.pos[0], current_triangle.vertex_two.pos[1], current_triangle.vertex_two.pos[2]);
+
+    // Compute the area 'current_triangle'
+    float area_of_triangle = ((cross(vector_one_to_vector_two,vector_two_to_vector_three)).magnitude())/1.0;
+    //cout << "vector_one_to_vector_two.magnitude(): " << vector_one_to_vector_two.magnitude() << endl;
+    //cout << "vector_one_to_vector_three.magnitude(): " << vector_one_to_vector_three.magnitude() << endl;
+    cout << "area_of_triangle: " << area_of_triangle << endl;  // Debugging
+    // Iterate through the bounding box to decide whether to draw the pixel and what color it is.
+
+    // Print Where it should be Debugging
+    // *(data + (MGLint)current_triangle.vertex_one.pos[0] + (MGLint)current_triangle.vertex_one.pos[1] * width) = Make_Pixel(255,0,0);
+    // *(data + (MGLint)current_triangle.vertex_two.pos[0] + (MGLint)current_triangle.vertex_two.pos[1] * width) = Make_Pixel(255,0,0);
+    // *(data + (MGLint)current_triangle.vertex_three.pos[0] + (MGLint)current_triangle.vertex_three.pos[1] * width) = Make_Pixel(255,0,0);
+
+    for (MGLint y_point = bounding_box_y_min; y_point < bounding_box_y_max; y_point++){
+      for (MGLint x_point = bounding_box_x_min; x_point < bounding_box_x_max; x_point++) {
+        //
+        // the barycentric coordinates can be calculated as
+
+          vec3 vector_one_to_point = vec3(x_point, y_point, 0) - vec3(current_triangle.vertex_one.pos[0], current_triangle.vertex_one.pos[1], 0);
+          vec3 vector_two_to_point = vec3(x_point, y_point, 0) - vec3(current_triangle.vertex_two.pos[0], current_triangle.vertex_two.pos[1], 0);
+          // alpha = area(Point,vertex_two,vertex_three) / area(vertex_one,vertex_two,vertex_three)
+          float alpha = ((cross(vector_two_to_vector_three, vector_two_to_point)).magnitude())/area_of_triangle;
+          // beta = area(vertex_one,Point,vertex_three) / area(vertex_one,vertex_two,vertex_three)
+          float beta  = ((cross(vector_one_to_vector_three, vector_one_to_point)).magnitude())/area_of_triangle;
+          // gamma = area(vertex_one,vertex_two, Point) / area(vertex_one,vertex_two,vertex_three);
+          float gamma = ((cross(vector_one_to_vector_two, vector_one_to_point)).magnitude())/area_of_triangle;
+
+           cout << "alpha , beta , gamma: " << alpha << " " <<  beta << " " << " " << gamma << endl;
+           cout << "alpha + beta + gamma: " << alpha + beta + gamma << endl;
+          if(alpha + beta + gamma <= 1.0) {
+            // cout << "LESS THAN 1 ! alpha + beta + gamma: " << alpha + beta + gamma << endl;
+            *(data + x_point + y_point * width) = Make_Pixel(255,255,255);
+          } else {
+            //*(data + x_point + y_point * width) = Make_Pixel(100,0,0);
+          }
+
+      }
+    }
+
+
+
+
+
+
+    // where P is a pixel position in the image and A,B,C are the vertexes of the triangle in pixel coordinates
+
+    // the area of the triangles can be calculated using this equation [https://piazza.com/class/j850]
+
+    // You can set the color of a pixel in the image to white using
+      // *(data + x + y * width) = Make_Pixel(255,255,255); where x and y are the pixel coordinates in the image.
+
+
+  }
+
 }
 
 /**
@@ -103,8 +196,8 @@ void mglReadPixels(MGLsize width,
 void mglBegin(MGLpoly_mode mode)
 {
   draw_mode = mode;          // Set draw mode specified by user.
-  list_of_verticies.clear();   // Be nice and clear list of verticies for user.
-  list_of_triangles.clear();   // Be nice and clear list of traingles for user.
+  //list_of_verticies.clear();   // Be nice and clear list of verticies for user.
+  //list_of_triangles.clear();   // Be nice and clear list of traingles for user.
 }
 
 /**
@@ -115,7 +208,7 @@ void mglEnd()
   switch (draw_mode) {
     // Convert list_of_verticies into list_of_triangles.
     case MGL_TRIANGLES :
-      for(unsigned int i = 0; i < list_of_verticies.size(); i+=3) {
+      for(unsigned int i = 0; (i + 3) <= list_of_verticies.size(); i+=3) {
         triangle current_triangle;   // current_triangle represents the triangle about the be built
         current_triangle.vertex_one   = list_of_verticies.at(i);
         current_triangle.vertex_two   = list_of_verticies.at(i + 1);
@@ -140,7 +233,7 @@ void mglEnd()
     // The user should expect to start at the first input vertext and draw the next one.
     // The standard convention for describing a shape is from left to right.
     case MGL_QUADS :
-      for(unsigned int i = 0; i < list_of_verticies.size(); i+=4) {
+      for(unsigned int i = 0; (i + 4) <= list_of_verticies.size(); i+=4) {
         triangle current_triangle;   // first_triangle represents the firt triangle built from the quad.
 
         // Grab first triangle from quad and store it in current triangle
@@ -153,7 +246,7 @@ void mglEnd()
 
         // Grab first triangle from quad and store it in current triangle
         current_triangle.vertex_one   = list_of_verticies.at(i);
-        current_triangle.vertex_two   = list_of_verticies.at(i + 1);
+        current_triangle.vertex_two   = list_of_verticies.at(i + 2);
         current_triangle.vertex_three = list_of_verticies.at(i + 3);
 
         // Add  second current_triangle to list of triangles
@@ -161,7 +254,11 @@ void mglEnd()
     }
     break;
   }
+
+  list_of_verticies.clear(); // After 'list_of_verticies' has been converted to 'list_of_triangles'. Clear 'list_of_vertices'.
 }
+
+
 
 /**
  * Specify a two-dimensional vertex; the x- and y-coordinates
@@ -177,6 +274,8 @@ void mglVertex2(MGLfloat x,
   v.color = current_color;
   v.pos = vec4(x,y,0,0);   // Still using a four-dimensional vector. z and w are 0.
 
+  list_of_verticies.push_back(v);
+
 }
 
 /**
@@ -188,9 +287,11 @@ void mglVertex3(MGLfloat x,
                 MGLfloat z)
 {
   vertex v;
-  
+
   v.color = current_color;
   v.pos = vec4(x,y,z,1);
+
+  list_of_verticies.push_back(v);
 }
 
 /**
@@ -221,6 +322,7 @@ void mglPopMatrix()
  */
 void mglLoadIdentity()
 {
+
 }
 
 /**

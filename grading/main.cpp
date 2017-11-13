@@ -115,7 +115,7 @@ void Display_Side_By_Side()
         for(size_t i=0;i<commands_gl.size();i++)
             commands_gl[i]();
     }
-    
+
     glMatrixMode(GL_PROJECTION);
     glPushMatrix();
     glLoadIdentity();
@@ -191,7 +191,7 @@ int main(int argc, char** argv)
     bool use_opengl = false;
     bool compare_only = false;
     int repeat=1;
-    
+
     // Parse commandline options
     while(1)
     {
@@ -238,6 +238,7 @@ int main(int argc, char** argv)
         clock_gettime(CLOCK_MONOTONIC, &t0);
         for(size_t i=0;i<commands_mgl.size();i++)
             commands_mgl[i]();
+            std::cout << "Calling mglReadPixels\n";  // Debugging
         mglReadPixels(width,height,pixel_data);
         clock_gettime(CLOCK_MONOTONIC, &t1);
         long long a0 = (long long)t0.tv_sec*1000000000+t0.tv_nsec;
@@ -292,10 +293,10 @@ int main(int argc, char** argv)
         if(use_opengl && !solution_file)
             Dump_png(pixel_data_sol,width,height,"gl.png");
     }
-    
+
     // Compare solutions
     if(pixel_data_sol) Compare(stats_file, use_png);
-    
+
 #ifndef NO_OPENGL
     // Leave results up for display.
     if(use_opengl && !compare_only)
