@@ -15,13 +15,13 @@ struct mat
 {
     T values[m*n];
 
-    int rows()
+    int rows()                  // Return number of rows in matrix
     {return m;}
-    
-    int cols()
+
+    int cols()                  // Return number of columns in matrix
     {return n;}
 
-    void make_zero()
+    void make_zero()            // set all entries in matrix to zero.
     {for(int i = 0; i < m*n; i++) values[i]=0;}
 
     mat& operator += (const mat& v)
@@ -65,9 +65,11 @@ struct mat
         return r;
     }
 
+    // inline means copy paste into code on compile time. The first const says keep the return const. // The second const says do not modify the object.
     inline const T& operator() (int i, int j) const
     {return values[i+j*m];}
 
+    // inline means do it within ,
     inline T& operator() (int i, int j)
     {return values[i+j*m];}
 };

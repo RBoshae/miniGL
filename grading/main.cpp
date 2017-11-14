@@ -238,7 +238,7 @@ int main(int argc, char** argv)
         clock_gettime(CLOCK_MONOTONIC, &t0);
         for(size_t i=0;i<commands_mgl.size();i++)
             commands_mgl[i]();
-            std::cout << "Calling mglReadPixels\n";  // Debugging
+            // std::cout << "Calling mglReadPixels\n";  // Debugging
         mglReadPixels(width,height,pixel_data);
         clock_gettime(CLOCK_MONOTONIC, &t1);
         long long a0 = (long long)t0.tv_sec*1000000000+t0.tv_nsec;
