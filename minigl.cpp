@@ -76,6 +76,7 @@ vector<triangle> list_of_triangles;                  // 'list_of_triangles' set 
 MGLmatrix_mode matrix_mode;                          // 'matrix_mode' is set by user. The matrix mode is either model_view or projection.
 
 mat4 projection_matrix;                              //
+
 mat4 modelview_matrix;                               //
 
 // 'get_current_matrix' is a helper function that returns the corresponding matrix to matrix mode.
@@ -168,7 +169,7 @@ void mglReadPixels(MGLsize width,
     // you can transform a vertex (x,y) of a triangle to pixel coordinates using
       // i = (x + 1) * width / 2;
       // j = (y + 1) * height / 2;
-    current_triangle = list_of_triangles[i];
+    current_triangle = list_of_triangles.at(i);
 
     // Debugging -- Output triangle vertex positions
     // cout << "current_triangle.vertex_one.pos[x] " << current_triangle.vertex_one.pos[0] << endl;          // Debugging
@@ -192,7 +193,7 @@ void mglReadPixels(MGLsize width,
     current_triangle.vertex_one.pos[1] = (MGLfloat)(current_triangle.vertex_one.pos[1]+1) * height / 2;    // Transform 'vertex_one' y-coordinate
 
     // Vertex Two Transform
-    current_triangle.vertex_two.pos[0] = (MGLfloat)(current_triangle.vertex_two.pos[0]+1) * width / 2;     // Transform 'vertex_two' x-coordinate
+    current_triangle.vertex_two.pos[0] = (MGLfloat)(current_triangle.vertex_two.pos[0]+1) * width / 2;      // Transform 'vertex_two' x-coordinate
     current_triangle.vertex_two.pos[1] = (MGLfloat)(current_triangle.vertex_two.pos[1]+1) * height / 2;     // Transform 'vertex_two' y-coordinate
 
     // Vertex Three Transform
@@ -255,7 +256,10 @@ void mglReadPixels(MGLsize width,
            // cout << "alpha , beta , gamma: " << alpha << " " <<  beta << " " << " " << gamma << endl; // Debugging
            //cout << "alpha + beta + gamma: " << alpha + beta + gamma << endl;                          // Debugging
           if((alpha + beta + gamma) == area_of_triangle) {
-            *(data + x_point + y_point * width) = Make_Pixel(255,0,0);
+
+            // Debugging -- Vertex color
+            // cout << "Color of Vertex One"  << endl << "R: " << current_triangle.vertex_one.color[0] * 255 << " G: " << current_triangle.vertex_one.color[1] * 255<< " B: " << current_triangle.vertex_one.color[2] * 255 << endl;
+            *(data + x_point + y_point * width) = Make_Pixel(current_triangle.vertex_one.color[0] * 255,current_triangle.vertex_one.color[1] * 255,current_triangle.vertex_one.color[2] * 255 );
           }
 
       }
@@ -271,8 +275,6 @@ cout << "Out of mglReadPixels" << endl; // Debugging
 void mglBegin(MGLpoly_mode mode)
 {
   draw_mode = mode;          // Set draw mode specified by user.
-//  list_of_vertices.clear();   // Be nice and clear list of vertices for user.
-//  list_of_triangles.clear();   // Be nice and clear list of traingles for user.
 }
 
 /**
@@ -283,7 +285,7 @@ void mglEnd()
   switch (draw_mode) {
     // Convert list_of_vertices into list_of_triangles.
     case MGL_TRIANGLES :
-      for(unsigned int i = 0; (i + 3) <= list_of_vertices.size(); i+=3) {
+      for(unsigned int i = 0; (i + 2) < list_of_vertices.size(); i+=3) {
         triangle current_triangle;   // current_triangle represents the triangle about the be built
         current_triangle.vertex_one   = list_of_vertices.at(i);
         current_triangle.vertex_two   = list_of_vertices.at(i + 1);
@@ -308,7 +310,7 @@ void mglEnd()
     // The user should expect to start at the first input vertext and draw the next one.
     // The standard convention for describing a shape is from left to right.
     case MGL_QUADS :
-      for(unsigned int i = 0; (i + 4) <= list_of_vertices.size(); i+=4) {
+      for(unsigned int i = 0; (i + 3) < list_of_vertices.size(); i+=4) {
         triangle current_local_triangle_one;   // first_triangle represents the firt triangle built from the quad.
 
         // Grab first triangle from quad and store it in current triangle
@@ -355,12 +357,13 @@ void mglEnd()
 void mglVertex2(MGLfloat x,
                 MGLfloat y)
 {
+  cout << "In mglVertex2" << endl;  //Debugging
+
   vertex v;
 
   v.color = current_color;
   v.pos = vec4(x,y,(MGLfloat)0.0,(MGLfloat)1.0);   // Still using a four-dimensional vector. z and w are 0.
 
-  cout << "In mglVertex2" << endl;  //Debugging
 
 
   // cout << "\tprojection_matrix():       " << projection_matrix << endl; //Debugging
@@ -376,14 +379,14 @@ void mglVertex2(MGLfloat x,
 
   //v.pos /= v.pos[3]; // this should occur in mglReadPixels
 
-  // cout << "Final v.pos: " << v.pos << endl; //Debugging
-  cout << "Out mglVertex2" << endl;  //Debugging
 
-
+  v.pos /= v.pos[3]; // Wrong location
 
 
   list_of_vertices.push_back(v);
 
+  // cout << "Final v.pos: " << v.pos << endl; //Debugging
+  cout << "Out mglVertex2" << endl;  //Debugging
 }
 
 /**
@@ -415,10 +418,11 @@ void mglVertex3(MGLfloat x,
   v.pos /= v.pos[3]; // Wrong location
 
   // cout << "Final v.pos: " << v.pos << endl; //Debugging
-  cout << "Out mglVertex3" << endl;  //Debugging
 
 
   list_of_vertices.push_back(v);
+
+  cout << "Out mglVertex3" << endl;  //Debugging
 }
 
 /**
@@ -531,7 +535,7 @@ void mglMultMatrix(const MGLfloat *matrix)
     passed_in_matrix.values[i] = *(matrix + i);
   }
 
-  get_current_matrix() = get_current_matrix()*passed_in_matrix;
+  get_current_matrix() = get_current_matrix() * passed_in_matrix;
 
  //  // Go across columns from a0 towards a12
  //  for(int move_across = 0; move_across < 4; move_across++) {
@@ -570,7 +574,7 @@ void mglTranslate(MGLfloat x,
   translation_matrix(2,3) = z;
   translation_matrix(1,1) = 1;
 
-  get_current_matrix() = translation_matrix*get_current_matrix();
+  get_current_matrix() = get_current_matrix() * translation_matrix;
 
 }
 
@@ -600,7 +604,7 @@ void mglRotate(MGLfloat angle,
   rotation_matrix(2,2) = (z*z)*(1-cos(angle)) + cos(angle);
   rotation_matrix(3,3) = 1;
 
-  get_current_matrix() = rotation_matrix*get_current_matrix();
+  get_current_matrix() = get_current_matrix() * rotation_matrix;
 }
 
 /**
@@ -621,7 +625,7 @@ void mglScale(MGLfloat x,
   scale_matrix(2,2) = z;
   scale_matrix(3,3) = 1;
 
-  get_current_matrix() = scale_matrix*get_current_matrix();
+  get_current_matrix() = get_current_matrix() * scale_matrix;
 }
 
 /**
@@ -650,11 +654,11 @@ void mglFrustum(MGLfloat left,
   perspective_matrix(3,2) = -1;
 
   cout << "\t left: " << left << ", right: " << right << ", bottom: " << bottom << ", top: " << top << ", near: " << near << ", far: " << far << endl;
-  cout << "\tperspective_matrix = " << perspective_matrix << endl; // Debugging
   cout << "\tget_current_matrix() = " << get_current_matrix() << endl; // Debugging
+  cout << "\tperspective_matrix = " << perspective_matrix << endl; // Debugging
 
 
-  get_current_matrix() = perspective_matrix*get_current_matrix();
+  get_current_matrix() = get_current_matrix() * perspective_matrix;
   cout << "\tperspective_matrix*get_current_matrix() = " << get_current_matrix() << endl; // Debugging
   cout << "Out of mglFrustum" << endl; // Debugging
 }
@@ -671,19 +675,19 @@ void mglOrtho(MGLfloat left,
               MGLfloat far)
 {
   cout << "In mglOrtho" << endl; // Debugging
-  mat4 other_matrix;
-  other_matrix.make_zero();
+  mat4 orthographic_matrix;
+  orthographic_matrix.make_zero();
 
   // Set the diagonal values of the matrix according to the spec on https://www.khronos.org/registry/OpenGL-Refpages/gl2.1/
-  other_matrix.values[0] =  (MGLfloat) 2/(right - left);
-  other_matrix.values[5] =  (MGLfloat) 2/(top - bottom);
-  other_matrix.values[10] = (MGLfloat) -2/(far - near);
-  other_matrix.values[12] = (MGLfloat) -1*((right+left)/(right-left));
-  other_matrix.values[13] = (MGLfloat) -1*((top+bottom)/(top-bottom));
-  other_matrix.values[14] = (MGLfloat) -1*((far+near)/(far-near));
-  other_matrix.values[15] = (MGLfloat) 1;
+  orthographic_matrix(0,0) = (MGLfloat) 2/(right - left);
+  orthographic_matrix(0,3) = (MGLfloat) -1*((right+left)/(right-left));
+  orthographic_matrix(1,1) = (MGLfloat) 2/(top - bottom);
+  orthographic_matrix(1,3) = (MGLfloat) -1*((top+bottom)/(top-bottom));
+  orthographic_matrix(2,2) = (MGLfloat) -2/(far - near);
+  orthographic_matrix(2,3) = (MGLfloat) -1*((far+near)/(far-near));
+  orthographic_matrix(3,3) = (MGLfloat) 1;
 
-  get_current_matrix() = get_current_matrix() * other_matrix;
+  get_current_matrix() = get_current_matrix() * orthographic_matrix;
 
   cout << "\t get_current_matrix(): " << get_current_matrix() << endl; //Debugging
   cout << "Out of mglOrtho" << endl; // Debugging
