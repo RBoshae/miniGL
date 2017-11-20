@@ -201,17 +201,17 @@ void mglReadPixels(MGLsize width,
     current_triangle.vertex_three.pos[1] = (MGLfloat)(current_triangle.vertex_three.pos[1]+1) * height / 2; // Transform 'vertex_three' y-coordinate
 
     // Debugging -- Output Screen Coordinates
-    // cout << "Screen Coordinates" << endl;
-    // cout << "current_triangle.vertex_one.pos[x] " << current_triangle.vertex_one.pos[0] << endl;
-    // cout << "current_triangle.vertex_one.pos[y] " << current_triangle.vertex_one.pos[1] << endl << endl;
-    // //cout << "current_triangle.vertex_one.pos[z] " << current_triangle.vertex_one.pos[2] << endl;
-    //
-    // cout << "current_triangle.vertex_two.pos[x] " << current_triangle.vertex_two.pos[0] << endl;
-    // cout << "current_triangle.vertex_two.pos[y] " << current_triangle.vertex_two.pos[1] << endl <<endl;
-    // //cout << "current_triangle.vertex_two.pos[z] " << current_triangle.vertex_two.pos[2] << endl;
-    //
-    // cout << "current_triangle.vertex_three.pos[x] " << current_triangle.vertex_three.pos[0] << endl;
-    // cout << "current_triangle.vertex_three.pos[y] " << current_triangle.vertex_three.pos[1] << endl << endl <<endl;
+    cout << "Screen Coordinates" << endl;
+    cout << "current_triangle.vertex_one.pos[x] " << current_triangle.vertex_one.pos[0] << endl;
+    cout << "current_triangle.vertex_one.pos[y] " << current_triangle.vertex_one.pos[1] << endl << endl;
+    //cout << "current_triangle.vertex_one.pos[z] " << current_triangle.vertex_one.pos[2] << endl;
+
+    cout << "current_triangle.vertex_two.pos[x] " << current_triangle.vertex_two.pos[0] << endl;
+    cout << "current_triangle.vertex_two.pos[y] " << current_triangle.vertex_two.pos[1] << endl <<endl;
+    //cout << "current_triangle.vertex_two.pos[z] " << current_triangle.vertex_two.pos[2] << endl;
+
+    cout << "current_triangle.vertex_three.pos[x] " << current_triangle.vertex_three.pos[0] << endl;
+    cout << "current_triangle.vertex_three.pos[y] " << current_triangle.vertex_three.pos[1] << endl << endl <<endl;
 
     // Create the bounding box for 'current_triangle'. To create the bounding box find Xmin, Xmax, Ymin, Ymax
     MGLfloat bounding_box_x_min = (MGLfloat)floor(min(current_triangle.vertex_one.pos[0], min(current_triangle.vertex_two.pos[0],current_triangle.vertex_three.pos[0]))); // Find Xmin
@@ -240,6 +240,8 @@ void mglReadPixels(MGLsize width,
     // *(data + (MGLint)current_triangle.vertex_two.pos[0] + (MGLint)current_triangle.vertex_two.pos[1] * width) = Make_Pixel(255,0,0);     // Debugging
     // *(data + (MGLint)current_triangle.vertex_three.pos[0] + (MGLint)current_triangle.vertex_three.pos[1] * width) = Make_Pixel(255,0,0); // Debugging
 
+    // Debugging -- Output bounding box
+    cout << "bounding_box_y_max: " << bounding_box_y_max << " bounding_box_x_max: " << bounding_box_x_max << endl; // Debugging
     for (MGLint y_point = bounding_box_y_min; y_point < bounding_box_y_max; y_point++){
       for (MGLint x_point = bounding_box_x_min; x_point < bounding_box_x_max; x_point++) {
 
@@ -255,7 +257,7 @@ void mglReadPixels(MGLsize width,
 
            // cout << "alpha , beta , gamma: " << alpha << " " <<  beta << " " << " " << gamma << endl; // Debugging
            //cout << "alpha + beta + gamma: " << alpha + beta + gamma << endl;                          // Debugging
-          if((alpha + beta + gamma) == area_of_triangle) {
+          if((alpha + beta + gamma) <= area_of_triangle + 0.01) {
 
             // Debugging -- Vertex color
             // cout << "Color of Vertex One"  << endl << "R: " << current_triangle.vertex_one.color[0] * 255 << " G: " << current_triangle.vertex_one.color[1] * 255<< " B: " << current_triangle.vertex_one.color[2] * 255 << endl;
@@ -479,7 +481,7 @@ void mglLoadIdentity()
   get_current_matrix()(2,2)  = (MGLfloat)1;
   get_current_matrix()(3,3)  = (MGLfloat)1;
 
-  //cout << "\t get_current_matrix(): " << get_current_matrix() << endl;
+  cout << "\tget_current_matrix(): " << get_current_matrix() << endl;
 
   cout << "Out Load Identity" << endl << endl;
 }
@@ -576,12 +578,23 @@ void mglTranslate(MGLfloat x,
 
   translation_matrix.make_zero();
 
+  // Create translation matrix
+  translation_matrix(0,0) = 1;
   translation_matrix(0,3) = x;
-  translation_matrix(1,3) = y;
-  translation_matrix(2,3) = z;
   translation_matrix(1,1) = 1;
+  translation_matrix(1,3) = y;
+  translation_matrix(2,2) = 1;
+  translation_matrix(2,3) = z;
+  translation_matrix(3,3) = 1;
+
+
+  // cout << "\t x: " << x << ", y: " << y << ", z: " << z << endl;
+  // cout << "\tget_current_matrix() = " << get_current_matrix() << endl; // Debugging
+  // cout << "\ttranslation_matrix = " << translation_matrix << endl; // Debugging
 
   get_current_matrix() = get_current_matrix() * translation_matrix;
+
+  // cout << "\tget_current_matrix()*translation_matrix = " << get_current_matrix() << endl; // Debugging
 
   cout << "In mglTranslate" << endl << endl; // Debugging
 }
@@ -599,20 +612,41 @@ void mglRotate(MGLfloat angle,
   cout << "In mglRotate" << endl; // Debugging
   mat4 rotation_matrix;
 
+  // convert degrees to radians
+  angle = angle*3.14/180;
+
+  if (sqrt(x*x + y*y + z*z) != 1) {
+    x /= sqrt(x*x + y*y + z*z);
+    y /= sqrt(x*x + y*y + z*z);
+    z /= sqrt(x*x + y*y + z*z);
+  }
+
   rotation_matrix.make_zero();
 
-  rotation_matrix(0,0) = (x*x)*(1-cos(angle)) + cos(angle);
-  rotation_matrix(0,1) = (x*y)*(1-cos(angle)) + z*sin(angle);
-  rotation_matrix(0,2) = (x*z)*(1-cos(angle)) + y*sin(angle);
-  rotation_matrix(1,0) = (y*x)*(1-cos(angle)) + z*sin(angle);
-  rotation_matrix(1,1) = (y*y)*(1-cos(angle)) + z*sin(angle);
-  rotation_matrix(1,2) = (y*z)*(1-cos(angle)) - x*sin(angle);
-  rotation_matrix(2,0) = (x*z)*(1-cos(angle)) + y*sin(angle);
-  rotation_matrix(2,1) = (y*z)*(1-cos(angle)) + x*sin(angle);
-  rotation_matrix(2,2) = (z*z)*(1-cos(angle)) + cos(angle);
-  rotation_matrix(3,3) = 1;
+  // First row
+  rotation_matrix(0,0) = (x*x)*(1-cos(angle)) + cos(angle);    // good
+  rotation_matrix(0,1) = (x*y)*(1-cos(angle)) - z*sin(angle);  // good
+  rotation_matrix(0,2) = (x*z)*(1-cos(angle)) + y*sin(angle);  // good // first row clear
+
+  // Second row
+  rotation_matrix(1,0) = (y*x)*(1-cos(angle)) + z*sin(angle);  // good
+  rotation_matrix(1,1) = (y*y)*(1-cos(angle)) + cos(angle);    // good
+  rotation_matrix(1,2) = (y*z)*(1-cos(angle)) - x*sin(angle);  // clear
+
+  // Third Row
+  rotation_matrix(2,0) = (x*z)*(1-cos(angle)) - y*sin(angle);  // clear
+  rotation_matrix(2,1) = (y*z)*(1-cos(angle)) + x*sin(angle);  // clear
+  rotation_matrix(2,2) = (z*z)*(1-cos(angle)) + cos(angle);    // clear
+
+  // Fourth row
+  rotation_matrix(3,3) = 1;                                    // clear
+
+  cout << "\t x: " << x << ", y: " << y << ", z: " << z << ", angle: " << angle << ", cos(angle): " << cos(angle) << ", sin(angle): " << sin(angle) << endl;
+  cout << "\tget_current_matrix() = " << get_current_matrix() << endl; // Debugging
+  cout << "\trotation_matrix      = " << rotation_matrix << endl;      // Debugging
 
   get_current_matrix() = get_current_matrix() * rotation_matrix;
+  cout << "\tget_current_matrix()*rotation_matrix = " << get_current_matrix() << endl; // Debugging
 
   cout << "Out mglRotate" << endl << endl; // Debugging
 }
@@ -701,7 +735,7 @@ void mglOrtho(MGLfloat left,
 
   get_current_matrix() = get_current_matrix() * orthographic_matrix;
 
-  cout << "\t get_current_matrix(): " << get_current_matrix() << endl; //Debugging
+  cout << "\tget_current_matrix() * orthographic_matrix: " << get_current_matrix() << endl; //Debugging
   cout << "Out of mglOrtho" << endl << endl; // Debugging
 }
 
@@ -713,6 +747,8 @@ void mglColor(MGLfloat red,
               MGLfloat blue)
 {
   cout << "In mglColor" << endl; // Debugging
+
+  cout << "\tred: " << red << " green: " << green << " blue: " << blue << endl;
 
   current_color=vec3(red,green,blue);
 
