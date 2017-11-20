@@ -265,7 +265,7 @@ void mglReadPixels(MGLsize width,
       }
     }
   }
-cout << "Out of mglReadPixels" << endl; // Debugging
+cout << "Out of mglReadPixels" << endl <<endl; // Debugging
 } // End of mglReadPixels
 
 /**
@@ -275,6 +275,7 @@ cout << "Out of mglReadPixels" << endl; // Debugging
 void mglBegin(MGLpoly_mode mode)
 {
   draw_mode = mode;          // Set draw mode specified by user.
+
 }
 
 /**
@@ -386,7 +387,7 @@ void mglVertex2(MGLfloat x,
   list_of_vertices.push_back(v);
 
   // cout << "Final v.pos: " << v.pos << endl; //Debugging
-  cout << "Out mglVertex2" << endl;  //Debugging
+  cout << "Out mglVertex2" << endl <<endl;  //Debugging
 }
 
 /**
@@ -422,7 +423,7 @@ void mglVertex3(MGLfloat x,
 
   list_of_vertices.push_back(v);
 
-  cout << "Out mglVertex3" << endl;  //Debugging
+  cout << "Out mglVertex3" << endl <<endl;  //Debugging
 }
 
 /**
@@ -449,6 +450,7 @@ void mglPushMatrix()
 {
   cout << "In mglPushMatrix" << endl; // Debugging
   get_current_matrix_stack().push_back(get_current_matrix());
+  cout << "Out mglPushMatrix" << endl << endl;
 }
 
 /**
@@ -458,7 +460,9 @@ void mglPushMatrix()
 void mglPopMatrix()
 {
   cout << "In mglPopMatrix" << endl; // Debugging
+  get_current_matrix() = get_current_matrix_stack().back();
   get_current_matrix_stack().pop_back();
+  cout << "Out mglPopMatrix" << endl << endl; // Debugging
 }
 
 /**
@@ -476,6 +480,8 @@ void mglLoadIdentity()
   get_current_matrix()(3,3)  = (MGLfloat)1;
 
   //cout << "\t get_current_matrix(): " << get_current_matrix() << endl;
+
+  cout << "Out Load Identity" << endl << endl;
 }
 
 
@@ -506,6 +512,7 @@ void mglLoadMatrix(const MGLfloat *matrix)
 //     }
 //   }
 // cout << get_current_matrix(); // Debugging
+  cout << "Out mglLoadMatrix" << endl << endl;  // Debugging
 }
 
 /**
@@ -552,7 +559,7 @@ void mglMultMatrix(const MGLfloat *matrix)
  // }
 
 
-
+ cout << "Out mglMultMatrix" << endl << endl;  // Debugging
 }
 
 /**
@@ -576,6 +583,7 @@ void mglTranslate(MGLfloat x,
 
   get_current_matrix() = get_current_matrix() * translation_matrix;
 
+  cout << "In mglTranslate" << endl << endl; // Debugging
 }
 
 /**
@@ -605,6 +613,8 @@ void mglRotate(MGLfloat angle,
   rotation_matrix(3,3) = 1;
 
   get_current_matrix() = get_current_matrix() * rotation_matrix;
+
+  cout << "Out mglRotate" << endl << endl; // Debugging
 }
 
 /**
@@ -626,6 +636,8 @@ void mglScale(MGLfloat x,
   scale_matrix(3,3) = 1;
 
   get_current_matrix() = get_current_matrix() * scale_matrix;
+
+  cout << "In mglScale" << endl << endl; // Debugging
 }
 
 /**
@@ -660,7 +672,7 @@ void mglFrustum(MGLfloat left,
 
   get_current_matrix() = get_current_matrix() * perspective_matrix;
   cout << "\tperspective_matrix*get_current_matrix() = " << get_current_matrix() << endl; // Debugging
-  cout << "Out of mglFrustum" << endl; // Debugging
+  cout << "Out of mglFrustum" << endl << endl; // Debugging
 }
 
 /**
@@ -690,7 +702,7 @@ void mglOrtho(MGLfloat left,
   get_current_matrix() = get_current_matrix() * orthographic_matrix;
 
   cout << "\t get_current_matrix(): " << get_current_matrix() << endl; //Debugging
-  cout << "Out of mglOrtho" << endl; // Debugging
+  cout << "Out of mglOrtho" << endl << endl; // Debugging
 }
 
 /**
@@ -704,6 +716,6 @@ void mglColor(MGLfloat red,
 
   current_color=vec3(red,green,blue);
 
-  cout << "Out of mglColor" << endl; // Debugging
+  cout << "Out of mglColor" << endl << endl; // Debugging
 
 }
