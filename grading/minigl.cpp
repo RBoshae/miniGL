@@ -545,6 +545,7 @@ void mglMultMatrix(const MGLfloat *matrix)
   }
 
   get_current_matrix() = get_current_matrix() * passed_in_matrix;
+  // get_current_matrix() =  passed_in_matrix * get_current_matrix();
 
  //  // Go across columns from a0 towards a12
  //  for(int move_across = 0; move_across < 4; move_across++) {
@@ -593,6 +594,7 @@ void mglTranslate(MGLfloat x,
   // cout << "\ttranslation_matrix = " << translation_matrix << endl; // Debugging
 
   get_current_matrix() = get_current_matrix() * translation_matrix;
+  // get_current_matrix() = translation_matrix * get_current_matrix();
 
   // cout << "\tget_current_matrix()*translation_matrix = " << get_current_matrix() << endl; // Debugging
 
@@ -613,7 +615,7 @@ void mglRotate(MGLfloat angle,
   mat4 rotation_matrix;
 
   // convert degrees to radians
-  angle = angle*3.14/180;
+  angle = (MGLfloat) angle*(3.14159265358979323846/180.0);
 
   if (sqrt(x*x + y*y + z*z) != 1) {
     x /= sqrt(x*x + y*y + z*z);
@@ -646,6 +648,7 @@ void mglRotate(MGLfloat angle,
   cout << "\trotation_matrix      = " << rotation_matrix << endl;      // Debugging
 
   get_current_matrix() = get_current_matrix() * rotation_matrix;
+  // get_current_matrix() = rotation_matrix * get_current_matrix();
   cout << "\tget_current_matrix()*rotation_matrix = " << get_current_matrix() << endl; // Debugging
 
   cout << "Out mglRotate" << endl << endl; // Debugging
@@ -670,6 +673,7 @@ void mglScale(MGLfloat x,
   scale_matrix(3,3) = 1;
 
   get_current_matrix() = get_current_matrix() * scale_matrix;
+  // get_current_matrix() = scale_matrix * get_current_matrix();
 
   cout << "In mglScale" << endl << endl; // Debugging
 }
@@ -705,6 +709,7 @@ void mglFrustum(MGLfloat left,
 
 
   get_current_matrix() = get_current_matrix() * perspective_matrix;
+  // get_current_matrix() = perspective_matrix * get_current_matrix();
   cout << "\tperspective_matrix*get_current_matrix() = " << get_current_matrix() << endl; // Debugging
   cout << "Out of mglFrustum" << endl << endl; // Debugging
 }
@@ -734,6 +739,7 @@ void mglOrtho(MGLfloat left,
   orthographic_matrix(3,3) = (MGLfloat) 1;
 
   get_current_matrix() = get_current_matrix() * orthographic_matrix;
+  // get_current_matrix() = orthographic_matrix * get_current_matrix();
 
   cout << "\tget_current_matrix() * orthographic_matrix: " << get_current_matrix() << endl; //Debugging
   cout << "Out of mglOrtho" << endl << endl; // Debugging

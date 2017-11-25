@@ -451,6 +451,7 @@ void mglMatrixMode(MGLmatrix_mode mode)
 void mglPushMatrix()
 {
   cout << "In mglPushMatrix" << endl; // Debugging
+  cout << "\tget_current_matrix_stack().push_back(get_current_matrix())" << get_current_matrix() <<endl;
   get_current_matrix_stack().push_back(get_current_matrix());
   cout << "Out mglPushMatrix" << endl << endl;
 }
