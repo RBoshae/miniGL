@@ -304,9 +304,10 @@ void mglReadPixels(MGLsize width,
             //     continue;
             //   }
 
-            if( x_point < 0 || y_point < 0 || ( width - x_point) <= 0 || (height - y_point) <= 1 || (abs(z_depth)/area_of_triangle > 1) ) {
+            if( (x_point < 0) || (y_point < 0) || ( width - x_point) <= 0 || ( width - x_point) >= width || (height - y_point) <= 1 || (height - y_point) > height || (abs(z_depth)/area_of_triangle > 1) ) {
               continue;
             }
+            //cout << "(height - y_point)" << (height - y_point) << endl;
 
 
             cout << "x_point = " << x_point << ", y_point = " << y_point << ", width = " << width << ", height = " << height << endl;
