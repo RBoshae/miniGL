@@ -451,6 +451,7 @@ void mglMatrixMode(MGLmatrix_mode mode)
 void mglPushMatrix()
 {
   cout << "In mglPushMatrix" << endl; // Debugging
+  cout << "\tget_current_matrix_stack().push_back(get_current_matrix())" << get_current_matrix() <<endl;
   get_current_matrix_stack().push_back(get_current_matrix());
   cout << "Out mglPushMatrix" << endl << endl;
 }
@@ -615,12 +616,14 @@ void mglRotate(MGLfloat angle,
   mat4 rotation_matrix;
 
   // convert degrees to radians
-  angle = (MGLfloat) angle*(3.14159265358979323846/180.0);
+  angle = (MGLfloat) (angle*3.14159265358979323846)/180.0;
 
-  if (sqrt(x*x + y*y + z*z) != 1) {
-    x /= sqrt(x*x + y*y + z*z);
-    y /= sqrt(x*x + y*y + z*z);
-    z /= sqrt(x*x + y*y + z*z);
+  MGLfloat magnitude = sqrt(x*x + y*y + z*z);
+
+  if (magnitude != 1) {
+    x /= magnitude;
+    y /= magnitude;
+    z /= magnitude;
   }
 
   rotation_matrix.make_zero();

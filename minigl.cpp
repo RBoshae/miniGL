@@ -383,7 +383,7 @@ void mglVertex2(MGLfloat x,
   //v.pos /= v.pos[3]; // this should occur in mglReadPixels
 
 
-  v.pos /= v.pos[3]; // Wrong location
+//  v.pos /= v.pos[3]; // Wrong location
 
 
   list_of_vertices.push_back(v);
@@ -407,10 +407,10 @@ void mglVertex3(MGLfloat x,
   v.color = current_color;
   v.pos = vec4(x,y,z,1);
 
-  cout << "\tprojection_matrix():                              " << projection_matrix << endl; //Debugging
-  cout << "\tmodelview_matrix():                               " << modelview_matrix << endl; //Debugging
+  cout << "\tprojection_matrix():                      " << projection_matrix << endl; //Debugging
+  cout << "\tmodelview_matrix():                       " << modelview_matrix << endl; //Debugging
 
-  cout << "\tprojection_matrix() * modelview_matrix():         " << projection_matrix*modelview_matrix << endl; //Debugging
+  cout << "\tprojection_matrix() * modelview_matrix(): " << projection_matrix*modelview_matrix << endl; //Debugging
   cout << "\tv.pos:                     " << v.pos << endl; //Debugging
 
   cout << "\tprojection_matrix() * modelview_matrix() * v.pos: " << projection_matrix*modelview_matrix * v.pos << endl; //Debugging
@@ -418,7 +418,7 @@ void mglVertex3(MGLfloat x,
   mat4 transform_matrix = projection_matrix * modelview_matrix;
   v.pos =  transform_matrix * v.pos;
 
-  v.pos /= v.pos[3]; // Wrong location
+  // v.pos /= v.pos[3]; // Wrong location
 
   // cout << "Final v.pos: " << v.pos << endl; //Debugging
 
@@ -616,12 +616,14 @@ void mglRotate(MGLfloat angle,
   mat4 rotation_matrix;
 
   // convert degrees to radians
-  angle = (MGLfloat) angle*(3.14159265358979323846/180.0);
+  angle = (MGLfloat) (angle*3.14159265358979323846)/180.0;
 
-  if (sqrt(x*x + y*y + z*z) != 1) {
-    x /= sqrt(x*x + y*y + z*z);
-    y /= sqrt(x*x + y*y + z*z);
-    z /= sqrt(x*x + y*y + z*z);
+  MGLfloat magnitude = sqrt(x*x + y*y + z*z);
+
+  if (magnitude != 1) {
+    x /= magnitude;
+    y /= magnitude;
+    z /= magnitude;
   }
 
   rotation_matrix.make_zero();
