@@ -111,6 +111,8 @@ vector<mat4>& get_current_matrix_stack() {
   }
 }
 
+vector<vec2> z_buffer;
+
 ///////////////// End of Added Global Variables //////////////////////
 
 /**
@@ -149,6 +151,9 @@ void mglReadPixels(MGLsize width,
                    MGLpixel *data)
 {
   cout << "In mglReadPixels\n";  // Debugging
+
+  // Resize z-buffer to match width times height
+  z_buffer.resize(width*height);
 
   // We're given the framebuffer and our goal is just to fill the buffer. We def do not want to clear vertex information.
 
@@ -262,6 +267,21 @@ void mglReadPixels(MGLsize width,
            // cout << "alpha , beta , gamma: " << alpha << " " <<  beta << " " << " " << gamma << endl; // Debugging
            //cout << "alpha + beta + gamma: " << alpha + beta + gamma << endl;                          // Debugging
           if((alpha + beta + gamma) <= area_of_triangle + 0.01) {
+            // perform z-interpolation
+
+            // For finding the depth of a pixel, (i,j), we use the Normalized Device Coordinates (NDC) of
+            // our vertices, a,b,c. (in my case 1, 2, 3) I.e, (z′a,z′b,z′c)=(za/wa,zb/wb,zc/wc) and use barycentric coordinates
+            // for linear interpolation:
+            //
+            // Z_{i,j}=α_{i,j}z′_one + β_{i,j}*z′_two + γ_{i,j}z′_three
+
+            MGLfloat z_depth = alpha*current_triangle.vertex_one.pos[2] + beta*current_triangle.vertex_two.pos[2] + gamma*current_triangle.vertex_three.pos[2]
+
+            // check if the z -depth- of the pixel (which we get by
+            // z-interpolation) is less than the min_z of that pixel
+            // (that we get from our storage). If so, it means that triangle t,
+            // at that pixel, is closest and we can color as we did before (set
+            // data[i+j*width]) and update the min_z of the pixel.
 
             // Debugging -- Vertex color
             // cout << "Color of Vertex One"  << endl << "R: " << current_triangle.vertex_one.color[0] * 255 << " G: " << current_triangle.vertex_one.color[1] * 255<< " B: " << current_triangle.vertex_one.color[2] * 255 << endl;
