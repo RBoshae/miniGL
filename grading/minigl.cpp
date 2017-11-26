@@ -188,6 +188,10 @@ void mglReadPixels(MGLsize width,
     // Transform 'current_triangle' from object space to screen space
       // Vertex One Transform
 
+    current_triangle.vertex_one.pos /= current_triangle.vertex_one.pos[3];
+    current_triangle.vertex_two.pos /= current_triangle.vertex_two.pos[3];
+    current_triangle.vertex_three.pos /= current_triangle.vertex_three.pos[3];
+
     // Vertex One Transform
     current_triangle.vertex_one.pos[0] = (MGLfloat)(((current_triangle.vertex_one.pos[0]+1) * width) / 2); // Transform 'vertex_one' x-coordinate
     current_triangle.vertex_one.pos[1] = (MGLfloat)(current_triangle.vertex_one.pos[1]+1) * height / 2;    // Transform 'vertex_one' y-coordinate
@@ -383,7 +387,7 @@ void mglVertex2(MGLfloat x,
   //v.pos /= v.pos[3]; // this should occur in mglReadPixels
 
 
-  v.pos /= v.pos[3]; // Wrong location
+//  v.pos /= v.pos[3]; // Wrong location
 
 
   list_of_vertices.push_back(v);
@@ -407,10 +411,10 @@ void mglVertex3(MGLfloat x,
   v.color = current_color;
   v.pos = vec4(x,y,z,1);
 
-  cout << "\tprojection_matrix():                              " << projection_matrix << endl; //Debugging
-  cout << "\tmodelview_matrix():                               " << modelview_matrix << endl; //Debugging
+  cout << "\tprojection_matrix():                      " << projection_matrix << endl; //Debugging
+  cout << "\tmodelview_matrix():                       " << modelview_matrix << endl; //Debugging
 
-  cout << "\tprojection_matrix() * modelview_matrix():         " << projection_matrix*modelview_matrix << endl; //Debugging
+  cout << "\tprojection_matrix() * modelview_matrix(): " << projection_matrix*modelview_matrix << endl; //Debugging
   cout << "\tv.pos:                     " << v.pos << endl; //Debugging
 
   cout << "\tprojection_matrix() * modelview_matrix() * v.pos: " << projection_matrix*modelview_matrix * v.pos << endl; //Debugging
@@ -418,7 +422,7 @@ void mglVertex3(MGLfloat x,
   mat4 transform_matrix = projection_matrix * modelview_matrix;
   v.pos =  transform_matrix * v.pos;
 
-  v.pos /= v.pos[3]; // Wrong location
+  // v.pos /= v.pos[3]; // Wrong location
 
   // cout << "Final v.pos: " << v.pos << endl; //Debugging
 

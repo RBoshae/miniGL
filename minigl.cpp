@@ -188,6 +188,10 @@ void mglReadPixels(MGLsize width,
     // Transform 'current_triangle' from object space to screen space
       // Vertex One Transform
 
+    current_triangle.vertex_one.pos /= current_triangle.vertex_one.pos[3];
+    current_triangle.vertex_two.pos /= current_triangle.vertex_two.pos[3];
+    current_triangle.vertex_three.pos /= current_triangle.vertex_three.pos[3];
+
     // Vertex One Transform
     current_triangle.vertex_one.pos[0] = (MGLfloat)(((current_triangle.vertex_one.pos[0]+1) * width) / 2); // Transform 'vertex_one' x-coordinate
     current_triangle.vertex_one.pos[1] = (MGLfloat)(current_triangle.vertex_one.pos[1]+1) * height / 2;    // Transform 'vertex_one' y-coordinate
