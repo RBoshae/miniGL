@@ -111,7 +111,7 @@ vector<mat4>& get_current_matrix_stack() {
   }
 }
 
-vector<vec2> z_buffer;
+vector<MGLfloat> z_buffer;
 
 ///////////////// End of Added Global Variables //////////////////////
 
@@ -154,6 +154,12 @@ void mglReadPixels(MGLsize width,
 
   // Resize z-buffer to match width times height
   z_buffer.resize(width*height);
+
+  // set all min-z values to a really big number in z_buffer
+  for (unsigned int i = 0; i < z_buffer.size(); i++) {
+    z_buffer.at(i) = numeric_limits<float>::infinity();
+  }
+
 
   // We're given the framebuffer and our goal is just to fill the buffer. We def do not want to clear vertex information.
 
@@ -223,10 +229,10 @@ void mglReadPixels(MGLsize width,
     cout << "current_triangle.vertex_three.pos[y] " << current_triangle.vertex_three.pos[1] << endl << endl <<endl;
 
     // Create the bounding box for 'current_triangle'. To create the bounding box find Xmin, Xmax, Ymin, Ymax
-    MGLfloat bounding_box_x_min = (MGLfloat)floor(min(current_triangle.vertex_one.pos[0], min(current_triangle.vertex_two.pos[0],current_triangle.vertex_three.pos[0]))); // Find Xmin
-    MGLfloat bounding_box_x_max = (MGLfloat)ceil(max(current_triangle.vertex_one.pos[0], max(current_triangle.vertex_two.pos[0],current_triangle.vertex_three.pos[0]))); // Find Xmax
-    MGLfloat bounding_box_y_min = (MGLfloat)floor(min(current_triangle.vertex_one.pos[1], min(current_triangle.vertex_two.pos[1],current_triangle.vertex_three.pos[1]))); // Find Ymin
-    MGLfloat bounding_box_y_max = (MGLfloat)ceil(max(current_triangle.vertex_one.pos[1], max(current_triangle.vertex_two.pos[1],current_triangle.vertex_three.pos[1]))); // Find Ymax
+    MGLfloat bounding_box_x_min = (MGLint)floor(min(current_triangle.vertex_one.pos[0], min(current_triangle.vertex_two.pos[0],current_triangle.vertex_three.pos[0]))); // Find Xmin
+    MGLfloat bounding_box_x_max = (MGLint)ceil(max(current_triangle.vertex_one.pos[0], max(current_triangle.vertex_two.pos[0],current_triangle.vertex_three.pos[0]))); // Find Xmax
+    MGLfloat bounding_box_y_min = (MGLint)floor(min(current_triangle.vertex_one.pos[1], min(current_triangle.vertex_two.pos[1],current_triangle.vertex_three.pos[1]))); // Find Ymin
+    MGLfloat bounding_box_y_max = (MGLint)ceil(max(current_triangle.vertex_one.pos[1], max(current_triangle.vertex_two.pos[1],current_triangle.vertex_three.pos[1]))); // Find Ymax
 
     // Determine the area of 'current_triangle'. Since I am working in two-dimensions, for now I will store the x and y values from each vertex in a new variable.
     vec3 vector_one_to_vector_two    = vec3(current_triangle.vertex_two.pos[0], current_triangle.vertex_two.pos[1], 0) - vec3(current_triangle.vertex_one.pos[0], current_triangle.vertex_one.pos[1], 0);
@@ -254,6 +260,9 @@ void mglReadPixels(MGLsize width,
     for (MGLint y_point = bounding_box_y_min; y_point < bounding_box_y_max; y_point++){
       for (MGLint x_point = bounding_box_x_min; x_point < bounding_box_x_max; x_point++) {
 
+        // Debugging -- Finding Seg Fault
+        // cout << "top of for loop\n";
+
         // the barycentric coordinates can be calculated as
           vec3 vector_one_to_point = vec3(x_point, y_point, 0) - vec3(current_triangle.vertex_one.pos[0], current_triangle.vertex_one.pos[1], 0);
           vec3 vector_two_to_point = vec3(x_point, y_point, 0) - vec3(current_triangle.vertex_two.pos[0], current_triangle.vertex_two.pos[1], 0);
@@ -263,6 +272,8 @@ void mglReadPixels(MGLsize width,
           MGLfloat beta  = ((cross(vector_one_to_vector_three, vector_one_to_point)).magnitude());
           // gamma = area(vertex_one,vertex_two, Point) / area(vertex_one,vertex_two,vertex_three);
           MGLfloat gamma = ((cross(vector_one_to_vector_two, vector_one_to_point)).magnitude());
+
+
 
            // cout << "alpha , beta , gamma: " << alpha << " " <<  beta << " " << " " << gamma << endl; // Debugging
            //cout << "alpha + beta + gamma: " << alpha + beta + gamma << endl;                          // Debugging
@@ -275,7 +286,10 @@ void mglReadPixels(MGLsize width,
             //
             // Z_{i,j}=α_{i,j}z′_one + β_{i,j}*z′_two + γ_{i,j}z′_three
 
-            MGLfloat z_depth = alpha*current_triangle.vertex_one.pos[2] + beta*current_triangle.vertex_two.pos[2] + gamma*current_triangle.vertex_three.pos[2]
+            MGLfloat z_depth = alpha*current_triangle.vertex_one.pos[2] + beta*current_triangle.vertex_two.pos[2] + gamma*current_triangle.vertex_three.pos[2];
+
+            // Color interpolation //HERE
+            vec3 color_interpolation((alpha*current_triangle.vertex_one.color + beta*current_triangle.vertex_two.color + gamma*current_triangle.vertex_three.color)*255/area_of_triangle);
 
             // check if the z -depth- of the pixel (which we get by
             // z-interpolation) is less than the min_z of that pixel
@@ -283,9 +297,42 @@ void mglReadPixels(MGLsize width,
             // at that pixel, is closest and we can color as we did before (set
             // data[i+j*width]) and update the min_z of the pixel.
 
-            // Debugging -- Vertex color
-            // cout << "Color of Vertex One"  << endl << "R: " << current_triangle.vertex_one.color[0] * 255 << " G: " << current_triangle.vertex_one.color[1] * 255<< " B: " << current_triangle.vertex_one.color[2] * 255 << endl;
-            *(data + x_point + y_point * width) = Make_Pixel(current_triangle.vertex_one.color[0] * 255,current_triangle.vertex_one.color[1] * 255,current_triangle.vertex_one.color[2] * 255 );
+            // Clipping
+            // if ( abs(current_triangle.vertex_one.pos[0]) > 1 || abs(current_triangle.vertex_one.pos[1]) > 1 || abs(current_triangle.vertex_one.pos[2]) > 1
+            //      || abs(current_triangle.vertex_two.pos[0]) > 1 || abs(current_triangle.vertex_two.pos[1]) > 1 || abs(current_triangle.vertex_two.pos[2]) > 1
+            //      || abs(current_triangle.vertex_three.pos[0]) > 1 || abs(current_triangle.vertex_three.pos[1]) > 1 || abs(current_triangle.vertex_three.pos[2]) > 1 ) {
+            //     continue;
+            //   }
+
+            if( x_point < 0 || y_point < 0 || ( width - x_point) <= 0 || (height - y_point) <= 1 || (abs(z_depth)/area_of_triangle > 1) ) {
+              continue;
+            }
+
+
+            cout << "x_point = " << x_point << ", y_point = " << y_point << ", width = " << width << ", height = " << height << endl;
+            cout  << "z_buffer.size() = " << z_buffer.size() << " Trying to access: " << x_point + y_point * width << endl;
+            if( z_depth < z_buffer.at(x_point + y_point * width)) {
+              cout << "found it" << endl;
+              // Debugging -- Finding Seg Fault
+              //cout << "Got You!\n";
+              z_buffer.at(x_point + y_point * width) = z_depth;
+              // Debugging -- Finding Seg Fault
+              //cout << "No you didn't =P\n";
+
+              // Debugging -- Vertex color
+              // cout << "Color of Vertex One"  << endl << "R: " << current_triangle.vertex_one.color[0] * 255 << " G: " << current_triangle.vertex_one.color[1] * 255<< " B: " << current_triangle.vertex_one.color[2] * 255 << endl;
+              //*(data + x_point + y_point * width) = Make_Pixel(current_triangle.vertex_one.color[0] * 255,current_triangle.vertex_one.color[1] * 255,current_triangle.vertex_one.color[2] * 255 );
+
+              // Debugging -- Vertex color interpolation
+              cout << "Color interpolation Values"  << endl << "R: " << color_interpolation[0] << " G: " << color_interpolation[1] << " B: " << color_interpolation[2] << endl;
+
+              // Debugging -- Finding Seg Fault
+              cout << "x_point = " << x_point << ", y_point = " << y_point << ", width = " << width << ", height = " << height << endl;
+              cout << "x_point + y_point * width = " << x_point + y_point * width << endl;
+              cout << "data + x_point + y_point * width = " << data + x_point + y_point * width << endl;
+                *(data + x_point + y_point * width) = Make_Pixel(color_interpolation[0], color_interpolation[1],color_interpolation[2]);
+                cout << "Not this =P\n";
+            }
           }
 
       }
@@ -529,8 +576,8 @@ void mglLoadMatrix(const MGLfloat *matrix)
 {
   cout << "In mglLoadMatrix" << endl;  // Debugging
 
-  for (int i = 0; i < 16; i++) {
-    get_current_matrix().values[i] = *(matrix + 1);
+  for (int i = 0; i < 16; ++i) {
+    get_current_matrix().values[i] = *(matrix + i);
   }
 
 //   for (int column = 0; column < 4; column++) {
