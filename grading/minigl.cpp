@@ -155,53 +155,38 @@ void mglReadPixels(MGLsize width,
   // Resize z-buffer to match width times height
   z_buffer.resize(width*height);
 
-  // set all min-z values to a really big number in z_buffer
+  // initialize min-z values in z_buffer
   for (unsigned int i = 0; i < z_buffer.size(); i++) {
-    z_buffer.at(i) = numeric_limits<float>::infinity();
+    z_buffer.at(i) = 2;
   }
 
 
-  // We're given the framebuffer and our goal is just to fill the buffer. We def do not want to clear vertex information.
-
   triangle current_triangle; // Used to store a copy of a triangle from a 'list_of_triangles'
 
-  // // Where I thought I should divide
-  // current_triangle.vertex_one.pos /= current_triangle.vertex_one.pos[3]; // this should occur in mglReadPixels
-  // current_triangle.vertex_two.pos /= current_triangle.vertex_one.pos[3]; // this should occur in mglReadPixels
-  // current_triangle.vertex_three.pos /= current_triangle.vertex_one.pos[3]; // this should occur in mglReadPixels
-
-  // cout << "list_of_triangles.size():" << list_of_triangles.size() << endl;  // Debugging
-
   // Iterate through the 'list_of_triangle'.
-  for (unsigned int i = 0; i < list_of_triangles.size(); i++){
-  //  cout << "In for loop\n";  // Debugging
-    // Debugging -- Output triangle vertex positions// calculate the pixel coordinates of the triangle
+  for (unsigned int triangle_list_index = 0; triangle_list_index < list_of_triangles.size(); ++triangle_list_index) {
+
+
+    current_triangle = list_of_triangles.at(triangle_list_index); // grab triangle from list of triangles.
+
+    // before processing a triangle, coordinates of each vertex is divided by its w to get the normalized device coordinates.
+    current_triangle.vertex_one.pos[0] /= current_triangle.vertex_one.pos[3];
+    current_triangle.vertex_one.pos[1] /= current_triangle.vertex_one.pos[3];
+    current_triangle.vertex_one.pos[2] /= current_triangle.vertex_one.pos[3];
+
+    current_triangle.vertex_two.pos[0] /= current_triangle.vertex_two.pos[3];
+    current_triangle.vertex_two.pos[1] /= current_triangle.vertex_two.pos[3];
+    current_triangle.vertex_two.pos[2] /= current_triangle.vertex_two.pos[3];
+
+    current_triangle.vertex_three.pos[0] /= current_triangle.vertex_three.pos[3];
+    current_triangle.vertex_three.pos[1] /= current_triangle.vertex_three.pos[3];
+    current_triangle.vertex_three.pos[2] /= current_triangle.vertex_three.pos[3];
+
+    // calculate the pixel coordinates of the triangle
     // determine whether a pixel in the image is inside the triangle transformed to the pixel coordinates
     // you can transform a vertex (x,y) of a triangle to pixel coordinates using
       // i = (x + 1) * width / 2;
       // j = (y + 1) * height / 2;
-    current_triangle = list_of_triangles.at(i);
-
-    // Debugging -- Output triangle vertex positions
-    // cout << "current_triangle.vertex_one.pos[x] " << current_triangle.vertex_one.pos[0] << endl;          // Debugging
-    // cout << "current_triangle.vertex_one.pos[y] " << current_triangle.vertex_one.pos[1] << endl << endl;  // Debugging
-    // cout << "current_triangle.vertex_one.pos[z] " << current_triangle.vertex_one.pos[2] << endl;          // Debugging
-
-    // Debugging -- Output triangle vertex positions
-    // cout << "current_triangle.vertex_two.pos[x] " << current_triangle.vertex_two.pos[0] << endl;          // Debugging
-    // cout << "current_triangle.vertex_two.pos[y] " << current_triangle.vertex_two.pos[1] << endl <<endl;   // Debugging
-    // cout << "current_triangle.vertex_two.pos[z] " << current_triangle.vertex_two.pos[2] << endl;          // Debugging
-
-    // Debugging -- Output triangle vertex positions
-    // cout << "current_triangle.vertex_three.pos[x] " << current_triangle.vertex_three.pos[0] << endl;      // Debugging
-    // cout << "current_triangle.vertex_three.pos[y] " << current_triangle.vertex_three.pos[1] << endl << endl <<endl; // Debugging
-    //cout << "current_triangle.vertex_three.pos[z] " << current_triangle.vertex_three.pos[2] << endl <<endl;
-    // Transform 'current_triangle' from object space to screen space
-      // Vertex One Transform
-
-    current_triangle.vertex_one.pos /= current_triangle.vertex_one.pos[3];
-    current_triangle.vertex_two.pos /= current_triangle.vertex_two.pos[3];
-    current_triangle.vertex_three.pos /= current_triangle.vertex_three.pos[3];
 
     // Vertex One Transform
     current_triangle.vertex_one.pos[0] = (MGLfloat)(((current_triangle.vertex_one.pos[0]+1) * width) / 2); // Transform 'vertex_one' x-coordinate
@@ -215,71 +200,59 @@ void mglReadPixels(MGLsize width,
     current_triangle.vertex_three.pos[0] = (MGLfloat)(current_triangle.vertex_three.pos[0]+1) * width / 2;  // Transform 'vertex_three' x-coordinate
     current_triangle.vertex_three.pos[1] = (MGLfloat)(current_triangle.vertex_three.pos[1]+1) * height / 2; // Transform 'vertex_three' y-coordinate
 
-    // Debugging -- Output Screen Coordinates
-    cout << "Screen Coordinates" << endl;
-    cout << "current_triangle.vertex_one.pos[x] " << current_triangle.vertex_one.pos[0] << endl;
-    cout << "current_triangle.vertex_one.pos[y] " << current_triangle.vertex_one.pos[1] << endl << endl;
-    //cout << "current_triangle.vertex_one.pos[z] " << current_triangle.vertex_one.pos[2] << endl;
-
-    cout << "current_triangle.vertex_two.pos[x] " << current_triangle.vertex_two.pos[0] << endl;
-    cout << "current_triangle.vertex_two.pos[y] " << current_triangle.vertex_two.pos[1] << endl <<endl;
-    //cout << "current_triangle.vertex_two.pos[z] " << current_triangle.vertex_two.pos[2] << endl;
-
-    cout << "current_triangle.vertex_three.pos[x] " << current_triangle.vertex_three.pos[0] << endl;
-    cout << "current_triangle.vertex_three.pos[y] " << current_triangle.vertex_three.pos[1] << endl << endl <<endl;
-
     // Create the bounding box for 'current_triangle'. To create the bounding box find Xmin, Xmax, Ymin, Ymax
-    MGLfloat bounding_box_x_min = (MGLint)floor(min(current_triangle.vertex_one.pos[0], min(current_triangle.vertex_two.pos[0],current_triangle.vertex_three.pos[0]))); // Find Xmin
-    MGLfloat bounding_box_x_max = (MGLint)ceil(max(current_triangle.vertex_one.pos[0], max(current_triangle.vertex_two.pos[0],current_triangle.vertex_three.pos[0]))); // Find Xmax
-    MGLfloat bounding_box_y_min = (MGLint)floor(min(current_triangle.vertex_one.pos[1], min(current_triangle.vertex_two.pos[1],current_triangle.vertex_three.pos[1]))); // Find Ymin
-    MGLfloat bounding_box_y_max = (MGLint)ceil(max(current_triangle.vertex_one.pos[1], max(current_triangle.vertex_two.pos[1],current_triangle.vertex_three.pos[1]))); // Find Ymax
+    MGLint bounding_box_x_min = (MGLint)floor(min(current_triangle.vertex_one.pos[0], min(current_triangle.vertex_two.pos[0],current_triangle.vertex_three.pos[0]))); // Find Xmin
+    MGLint bounding_box_x_max = (MGLint)ceil(max(current_triangle.vertex_one.pos[0], max(current_triangle.vertex_two.pos[0],current_triangle.vertex_three.pos[0]))); // Find Xmax
+    MGLint bounding_box_y_min = (MGLint)floor(min(current_triangle.vertex_one.pos[1], min(current_triangle.vertex_two.pos[1],current_triangle.vertex_three.pos[1]))); // Find Ymin
+    MGLint bounding_box_y_max = (MGLint)ceil(max(current_triangle.vertex_one.pos[1], max(current_triangle.vertex_two.pos[1],current_triangle.vertex_three.pos[1]))); // Find Ymax
+
 
     // Determine the area of 'current_triangle'. Since I am working in two-dimensions, for now I will store the x and y values from each vertex in a new variable.
-    vec3 vector_one_to_vector_two    = vec3(current_triangle.vertex_two.pos[0], current_triangle.vertex_two.pos[1], 0) - vec3(current_triangle.vertex_one.pos[0], current_triangle.vertex_one.pos[1], 0);
+    // vec3 vertex_one_to_vertex_two    = vec3(current_triangle.vertex_two.pos[0], current_triangle.vertex_two.pos[1], current_triangle.vertex_two.pos[2]) - vec3(current_triangle.vertex_one.pos[0], current_triangle.vertex_one.pos[1], current_triangle.vertex_one.pos[2]);
+    //
+    // vec3 vertex_one_to_vertex_three  = vec3(current_triangle.vertex_three.pos[0], current_triangle.vertex_three.pos[1], current_triangle.vertex_three.pos[2]) - vec3(current_triangle.vertex_one.pos[0], current_triangle.vertex_one.pos[1], current_triangle.vertex_one.pos[2]);
+    //
+    // vec3 vertex_two_to_vertex_three  = vec3(current_triangle.vertex_three.pos[0], current_triangle.vertex_three.pos[1], current_triangle.vertex_three.pos[2]) - vec3(current_triangle.vertex_two.pos[0], current_triangle.vertex_two.pos[1], current_triangle.vertex_two.pos[2]);
 
-    vec3 vector_one_to_vector_three  = vec3(current_triangle.vertex_three.pos[0], current_triangle.vertex_three.pos[1], 0) - vec3(current_triangle.vertex_one.pos[0], current_triangle.vertex_one.pos[1], 0);
+    vec3 vertex_one_to_vertex_two    = vec3(current_triangle.vertex_two.pos[0], current_triangle.vertex_two.pos[1], 0) - vec3(current_triangle.vertex_one.pos[0], current_triangle.vertex_one.pos[1], 0);
 
-    vec3 vector_two_to_vector_three  = vec3(current_triangle.vertex_three.pos[0], current_triangle.vertex_three.pos[1], 0) - vec3(current_triangle.vertex_two.pos[0], current_triangle.vertex_two.pos[1], 0);
+    vec3 vertex_one_to_vertex_three  = vec3(current_triangle.vertex_three.pos[0], current_triangle.vertex_three.pos[1], 0) - vec3(current_triangle.vertex_one.pos[0], current_triangle.vertex_one.pos[1], 0);
+
+    vec3 vertex_two_to_vertex_three  = vec3(current_triangle.vertex_three.pos[0], current_triangle.vertex_three.pos[1], 0) - vec3(current_triangle.vertex_two.pos[0], current_triangle.vertex_two.pos[1], 0);
 
     // Compute the area 'current_triangle'
-    MGLfloat area_of_triangle = ((cross(vector_one_to_vector_two,vector_two_to_vector_three)).magnitude());
-    // Debugging
-    // cout << "vector_one_to_vector_two.magnitude(): " << vector_one_to_vector_two.magnitude() << endl;      // Debugging
-    // cout << "vector_one_to_vector_three.magnitude(): " << vector_one_to_vector_three.magnitude() << endl;  // Debugging
-    // cout << "area_of_triangle: " << area_of_triangle << endl;                                              // Debugging
-    // Iterate through the bounding box to decide whether to draw the pixel and what color it is.
+    MGLfloat area_of_triangle = ((cross(vertex_one_to_vertex_two, vertex_one_to_vertex_three)).magnitude()); // I can divide by two here but there is really no need at this point.
 
-    // Debugging
-    // Print Where it should be Debugging
-    // *(data + (MGLint)current_triangle.vertex_one.pos[0] + (MGLint)current_triangle.vertex_one.pos[1] * width) = Make_Pixel(255,0,0);     // Debugging
-    // *(data + (MGLint)current_triangle.vertex_two.pos[0] + (MGLint)current_triangle.vertex_two.pos[1] * width) = Make_Pixel(255,0,0);     // Debugging
-    // *(data + (MGLint)current_triangle.vertex_three.pos[0] + (MGLint)current_triangle.vertex_three.pos[1] * width) = Make_Pixel(255,0,0); // Debugging
+    cout << "area_of_triangle [" << triangle_list_index << "]: " << area_of_triangle/2 << endl << endl;
 
-    // Debugging -- Output bounding box
-    cout << "bounding_box_y_max: " << bounding_box_y_max << " bounding_box_x_max: " << bounding_box_x_max << endl; // Debugging
-    for (MGLint y_point = bounding_box_y_min; y_point < bounding_box_y_max; y_point++){
-      for (MGLint x_point = bounding_box_x_min; x_point < bounding_box_x_max; x_point++) {
-
-        // Debugging -- Finding Seg Fault
-        // cout << "top of for loop\n";
+    for (MGLint y_point = bounding_box_y_min; y_point <= bounding_box_y_max; ++y_point){
+      for (MGLint x_point = bounding_box_x_min; x_point <= bounding_box_x_max; ++x_point) {
 
         // the barycentric coordinates can be calculated as
-          vec3 vector_one_to_point = vec3(x_point, y_point, 0) - vec3(current_triangle.vertex_one.pos[0], current_triangle.vertex_one.pos[1], 0);
-          vec3 vector_two_to_point = vec3(x_point, y_point, 0) - vec3(current_triangle.vertex_two.pos[0], current_triangle.vertex_two.pos[1], 0);
-          // alpha = area(Point,vertex_two,vertex_three) / area(vertex_one,vertex_two,vertex_three)
-          MGLfloat alpha = ((cross(vector_two_to_vector_three, vector_two_to_point)).magnitude());
-          // beta = area(vertex_one,Point,vertex_three) / area(vertex_one,vertex_two,vertex_three)
-          MGLfloat beta  = ((cross(vector_one_to_vector_three, vector_one_to_point)).magnitude());
-          // gamma = area(vertex_one,vertex_two, Point) / area(vertex_one,vertex_two,vertex_three);
-          MGLfloat gamma = ((cross(vector_one_to_vector_two, vector_one_to_point)).magnitude());
+          vec3 vertex_one_to_point = vec3(x_point, y_point, 0) - vec3(current_triangle.vertex_one.pos[0], current_triangle.vertex_one.pos[1], 0);
+          vec3 vertex_two_to_point = vec3(x_point, y_point, 0) - vec3(current_triangle.vertex_two.pos[0], current_triangle.vertex_two.pos[1], 0);
 
+          //       alpha = area(Point,vertex_two,vertex_three) / area(vertex_one,vertex_two,vertex_three)
+          MGLfloat alpha = ((cross(vertex_two_to_vertex_three, vertex_two_to_point)).magnitude());    // I can divide by two here but there is really no need at this point.
 
+          //       beta = area(vertex_one,Point,vertex_three) / area(vertex_one,vertex_two,vertex_three)
+          MGLfloat beta  = ((cross(vertex_one_to_vertex_three, vertex_one_to_point)).magnitude());    // I can divide by two here but there is really no need at this point.
+
+          //       gamma = area(vertex_one,vertex_two, Point) / area(vertex_one,vertex_two,vertex_three);
+          MGLfloat gamma = ((cross(vertex_one_to_vertex_two, vertex_one_to_point)).magnitude());      // I can divide by two here but there is really no need at this point.
 
            // cout << "alpha , beta , gamma: " << alpha << " " <<  beta << " " << " " << gamma << endl; // Debugging
            //cout << "alpha + beta + gamma: " << alpha + beta + gamma << endl;                          // Debugging
-          if((alpha + beta + gamma) <= area_of_triangle + 0.01) {
+          if((alpha + beta + gamma) <= (area_of_triangle + 0.01f)) { // QUESTION: How do I get around this floating point rounding issue?
             // perform z-interpolation
+            alpha/=area_of_triangle;
+            beta/=area_of_triangle;
+            gamma/=area_of_triangle;
 
+            // cout << "alpha:  " << alpha << ", beta: " <<  beta << ", gamma: " << gamma << endl; // Debugging
+            // cout << "alpha + beta + gamma: " << alpha + beta + gamma << endl;                          // Debugging
+
+            // FINDING Z DEPTH
             // For finding the depth of a pixel, (i,j), we use the Normalized Device Coordinates (NDC) of
             // our vertices, a,b,c. (in my case 1, 2, 3) I.e, (z′a,z′b,z′c)=(za/wa,zb/wb,zc/wc) and use barycentric coordinates
             // for linear interpolation:
@@ -287,52 +260,66 @@ void mglReadPixels(MGLsize width,
             // Z_{i,j}=α_{i,j}z′_one + β_{i,j}*z′_two + γ_{i,j}z′_three
 
             MGLfloat z_depth = alpha*current_triangle.vertex_one.pos[2] + beta*current_triangle.vertex_two.pos[2] + gamma*current_triangle.vertex_three.pos[2];
+            // cout << "z_depth" << z_depth;
 
-            // Color interpolation //HERE
-            vec3 color_interpolation((alpha*current_triangle.vertex_one.color + beta*current_triangle.vertex_two.color + gamma*current_triangle.vertex_three.color)*255/area_of_triangle);
+            // Color interpolation
+            //vec3 color_interpolation((alpha*current_triangle.vertex_one.color + beta*current_triangle.vertex_two.color + gamma*current_triangle.vertex_three.color)*255);
 
+            // perspective color interpolation
+            // MGLfloat alpha_prime = (alpha * current_triangle.vertex_one.pos[3])/ (alpha*current_triangle.vertex_one.pos[3] + beta*current_triangle.vertex_two.pos[3] + gamma*current_triangle.vertex_three.pos[3]);
+            //
+            // MGLfloat beta_prime = (beta * current_triangle.vertex_two.pos[3])/ (alpha*current_triangle.vertex_one.pos[3] + beta*current_triangle.vertex_two.pos[3] + gamma*current_triangle.vertex_three.pos[3]);
+            //
+            // MGLfloat gamma_prime = (gamma * current_triangle.vertex_three.pos[3])/ (alpha*current_triangle.vertex_one.pos[3] + beta*current_triangle.vertex_two.pos[3] + gamma*current_triangle.vertex_three.pos[3]);
+            MGLfloat alpha_real = (alpha/current_triangle.vertex_one.pos[3])/ ((alpha/current_triangle.vertex_one.pos[3]) + (beta/current_triangle.vertex_two.pos[3]) + (gamma/current_triangle.vertex_three.pos[3]));
+
+            MGLfloat beta_real = (beta/current_triangle.vertex_two.pos[3])/ ((alpha/current_triangle.vertex_one.pos[3]) + (beta/current_triangle.vertex_two.pos[3]) + (gamma/current_triangle.vertex_three.pos[3]));
+
+            MGLfloat gamma_real = (gamma/current_triangle.vertex_three.pos[3])/ ((alpha/current_triangle.vertex_one.pos[3]) + (beta/current_triangle.vertex_two.pos[3]) + (gamma/current_triangle.vertex_three.pos[3]));
+
+            //cout << "alpha_real: " << alpha_real << ", beta_real: " << beta_real << ", gamma_real: " << gamma_real << endl;
+            vec3 color_interpolation((alpha_real*current_triangle.vertex_one.color + beta_real*current_triangle.vertex_two.color + gamma_real*current_triangle.vertex_three.color)*255);
             // check if the z -depth- of the pixel (which we get by
             // z-interpolation) is less than the min_z of that pixel
             // (that we get from our storage). If so, it means that triangle t,
             // at that pixel, is closest and we can color as we did before (set
             // data[i+j*width]) and update the min_z of the pixel.
 
-            // Clipping
-            // if ( abs(current_triangle.vertex_one.pos[0]) > 1 || abs(current_triangle.vertex_one.pos[1]) > 1 || abs(current_triangle.vertex_one.pos[2]) > 1
-            //      || abs(current_triangle.vertex_two.pos[0]) > 1 || abs(current_triangle.vertex_two.pos[1]) > 1 || abs(current_triangle.vertex_two.pos[2]) > 1
-            //      || abs(current_triangle.vertex_three.pos[0]) > 1 || abs(current_triangle.vertex_three.pos[1]) > 1 || abs(current_triangle.vertex_three.pos[2]) > 1 ) {
-            //     continue;
-            //   }
-
-            if( (x_point < 0) || (y_point < 0) || ( width - x_point) <= 0 || ( width - x_point) >= width || (height - y_point) <= 1 || (height - y_point) > height || (abs(z_depth)/area_of_triangle > 1) ) {
+            if( (x_point < 0) || (y_point < 0) || ( width - x_point) <= 0 || ( width - x_point) >= width || (height - y_point) <= 1 || (height - y_point) > height || (abs(z_depth) > 1) ) {
               continue;
             }
             //cout << "(height - y_point)" << (height - y_point) << endl;
 
+            // Debuggin -- Seg fault from accessing z-buffer
+            // cout << "x_point = " << x_point << ", y_point = " << y_point << ", width = " << width << ", height = " << height << endl;
+            // cout  << "z_buffer.size() = " << z_buffer.size() << " Trying to access: " << x_point + y_point * width << endl;
+            if( z_depth <= z_buffer.at(x_point + y_point * width)) {
+              // if (z_buffer.at(x_point + y_point * width) != 2) {
+              //   cout << "z_depth replaced" << endl;
+              //   cout << "old z-value: " << z_buffer.at(x_point + y_point * width) << ", new z-value: " <<  z_depth << endl;
+              // }
 
-            cout << "x_point = " << x_point << ", y_point = " << y_point << ", width = " << width << ", height = " << height << endl;
-            cout  << "z_buffer.size() = " << z_buffer.size() << " Trying to access: " << x_point + y_point * width << endl;
-            if( z_depth < z_buffer.at(x_point + y_point * width)) {
-              cout << "found it" << endl;
-              // Debugging -- Finding Seg Fault
-              //cout << "Got You!\n";
+              if( z_depth == z_buffer.at(x_point + y_point * width)) {
+                cout << "z_depth collision" << endl;
+                cout << "old z-value: " << z_buffer.at(x_point + y_point * width) << ", new z-value: " <<  z_depth << endl;
+              }
+
+
               z_buffer.at(x_point + y_point * width) = z_depth;
-              // Debugging -- Finding Seg Fault
-              //cout << "No you didn't =P\n";
 
               // Debugging -- Vertex color
               // cout << "Color of Vertex One"  << endl << "R: " << current_triangle.vertex_one.color[0] * 255 << " G: " << current_triangle.vertex_one.color[1] * 255<< " B: " << current_triangle.vertex_one.color[2] * 255 << endl;
               //*(data + x_point + y_point * width) = Make_Pixel(current_triangle.vertex_one.color[0] * 255,current_triangle.vertex_one.color[1] * 255,current_triangle.vertex_one.color[2] * 255 );
 
               // Debugging -- Vertex color interpolation
-              cout << "Color interpolation Values"  << endl << "R: " << color_interpolation[0] << " G: " << color_interpolation[1] << " B: " << color_interpolation[2] << endl;
+               //cout << "Color interpolation Values"  << endl << "R: " << color_interpolation[0] << " G: " << color_interpolation[1] << " B: " << color_interpolation[2] << endl;
 
               // Debugging -- Finding Seg Fault
-              cout << "x_point = " << x_point << ", y_point = " << y_point << ", width = " << width << ", height = " << height << endl;
-              cout << "x_point + y_point * width = " << x_point + y_point * width << endl;
-              cout << "data + x_point + y_point * width = " << data + x_point + y_point * width << endl;
+              // cout << "x_point = " << x_point << ", y_point = " << y_point << ", width = " << width << ", height = " << height << endl;
+              // cout << "x_point + y_point * width = " << x_point + y_point * width << endl;
+              // cout << "data + x_point + y_point * width = " << data + x_point + y_point * width << endl;
                 *(data + x_point + y_point * width) = Make_Pixel(color_interpolation[0], color_interpolation[1],color_interpolation[2]);
-                cout << "Not this =P\n";
+
             }
           }
 
@@ -479,13 +466,13 @@ void mglVertex3(MGLfloat x,
   v.color = current_color;
   v.pos = vec4(x,y,z,1);
 
-  cout << "\tprojection_matrix():                      " << projection_matrix << endl; //Debugging
-  cout << "\tmodelview_matrix():                       " << modelview_matrix << endl; //Debugging
-
-  cout << "\tprojection_matrix() * modelview_matrix(): " << projection_matrix*modelview_matrix << endl; //Debugging
-  cout << "\tv.pos:                     " << v.pos << endl; //Debugging
-
-  cout << "\tprojection_matrix() * modelview_matrix() * v.pos: " << projection_matrix*modelview_matrix * v.pos << endl; //Debugging
+  // cout << "\tprojection_matrix():                      " << projection_matrix << endl; //Debugging
+  // cout << "\tmodelview_matrix():                       " << modelview_matrix << endl; //Debugging
+  //
+  // cout << "\tprojection_matrix() * modelview_matrix(): " << projection_matrix*modelview_matrix << endl; //Debugging
+  // cout << "\tv.pos:                     " << v.pos << endl; //Debugging
+  //
+  // cout << "\tprojection_matrix() * modelview_matrix() * v.pos: " << projection_matrix*modelview_matrix * v.pos << endl; //Debugging
 
   mat4 transform_matrix = projection_matrix * modelview_matrix;
   v.pos =  transform_matrix * v.pos;
@@ -508,12 +495,12 @@ void mglMatrixMode(MGLmatrix_mode mode)
   // Set 'matrix_mode' to the mode passed in by the user.
   matrix_mode = mode;
 
-  if (mode == MGL_PROJECTION) {
-    cout << "Current Matrix Mode: projection Mode" << endl;   // Debugging
-  }
-  if (mode == MGL_MODELVIEW) {
-    cout << "Current Matrix Mode: Model View Mode" << endl;   // Debugging
-  }
+  // if (mode == MGL_PROJECTION) {
+  //   cout << "Current Matrix Mode: projection Mode" << endl;   // Debugging
+  // }
+  // if (mode == MGL_MODELVIEW) {
+  //   cout << "Current Matrix Mode: Model View Mode" << endl;   // Debugging
+  // }
 }
 
 /**
@@ -523,7 +510,7 @@ void mglMatrixMode(MGLmatrix_mode mode)
 void mglPushMatrix()
 {
   cout << "In mglPushMatrix" << endl; // Debugging
-  cout << "\tget_current_matrix_stack().push_back(get_current_matrix())" << get_current_matrix() <<endl;
+  //cout << "\tget_current_matrix_stack().push_back(get_current_matrix())" << get_current_matrix() <<endl;
   get_current_matrix_stack().push_back(get_current_matrix());
   cout << "Out mglPushMatrix" << endl << endl;
 }
@@ -718,13 +705,13 @@ void mglRotate(MGLfloat angle,
   // Fourth row
   rotation_matrix(3,3) = 1;                                    // clear
 
-  cout << "\t x: " << x << ", y: " << y << ", z: " << z << ", angle: " << angle << ", cos(angle): " << cos(angle) << ", sin(angle): " << sin(angle) << endl;
-  cout << "\tget_current_matrix() = " << get_current_matrix() << endl; // Debugging
-  cout << "\trotation_matrix      = " << rotation_matrix << endl;      // Debugging
+  //cout << "\t x: " << x << ", y: " << y << ", z: " << z << ", angle: " << angle << ", cos(angle): " << cos(angle) << ", sin(angle): " << sin(angle) << endl;
+//  cout << "\tget_current_matrix() = " << get_current_matrix() << endl; // Debugging
+  //cout << "\trotation_matrix      = " << rotation_matrix << endl;      // Debugging
 
   get_current_matrix() = get_current_matrix() * rotation_matrix;
   // get_current_matrix() = rotation_matrix * get_current_matrix();
-  cout << "\tget_current_matrix()*rotation_matrix = " << get_current_matrix() << endl; // Debugging
+  //cout << "\tget_current_matrix()*rotation_matrix = " << get_current_matrix() << endl; // Debugging
 
   cout << "Out mglRotate" << endl << endl; // Debugging
 }
@@ -778,14 +765,14 @@ void mglFrustum(MGLfloat left,
   perspective_matrix(2,3) = (2*far*near)/(far-near);
   perspective_matrix(3,2) = -1;
 
-  cout << "\t left: " << left << ", right: " << right << ", bottom: " << bottom << ", top: " << top << ", near: " << near << ", far: " << far << endl;
-  cout << "\tget_current_matrix() = " << get_current_matrix() << endl; // Debugging
-  cout << "\tperspective_matrix = " << perspective_matrix << endl; // Debugging
+  // cout << "\t left: " << left << ", right: " << right << ", bottom: " << bottom << ", top: " << top << ", near: " << near << ", far: " << far << endl;
+  // cout << "\tget_current_matrix() = " << get_current_matrix() << endl; // Debugging
+  // cout << "\tperspective_matrix = " << perspective_matrix << endl; // Debugging
 
 
   get_current_matrix() = get_current_matrix() * perspective_matrix;
   // get_current_matrix() = perspective_matrix * get_current_matrix();
-  cout << "\tperspective_matrix*get_current_matrix() = " << get_current_matrix() << endl; // Debugging
+  // cout << "\tperspective_matrix*get_current_matrix() = " << get_current_matrix() << endl; // Debugging
   cout << "Out of mglFrustum" << endl << endl; // Debugging
 }
 
@@ -816,7 +803,7 @@ void mglOrtho(MGLfloat left,
   get_current_matrix() = get_current_matrix() * orthographic_matrix;
   // get_current_matrix() = orthographic_matrix * get_current_matrix();
 
-  cout << "\tget_current_matrix() * orthographic_matrix: " << get_current_matrix() << endl; //Debugging
+  // cout << "\tget_current_matrix() * orthographic_matrix: " << get_current_matrix() << endl; //Debugging
   cout << "Out of mglOrtho" << endl << endl; // Debugging
 }
 
@@ -829,7 +816,7 @@ void mglColor(MGLfloat red,
 {
   cout << "In mglColor" << endl; // Debugging
 
-  cout << "\tred: " << red << " green: " << green << " blue: " << blue << endl;
+  // cout << "\tred: " << red << " green: " << green << " blue: " << blue << endl;
 
   current_color=vec3(red,green,blue);
 
