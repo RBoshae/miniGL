@@ -160,7 +160,6 @@ void mglReadPixels(MGLsize width,
     z_buffer.at(i) = 2;
   }
 
-
   triangle current_triangle; // Used to store a copy of a triangle from a 'list_of_triangles'
 
   // Iterate through the 'list_of_triangle'.
@@ -206,7 +205,21 @@ void mglReadPixels(MGLsize width,
     MGLint bounding_box_y_min = (MGLint)floor(min(current_triangle.vertex_one.pos[1], min(current_triangle.vertex_two.pos[1],current_triangle.vertex_three.pos[1]))); // Find Ymin
     MGLint bounding_box_y_max = (MGLint)ceil(max(current_triangle.vertex_one.pos[1], max(current_triangle.vertex_two.pos[1],current_triangle.vertex_three.pos[1]))); // Find Ymax
 
+    if (bounding_box_y_max > (MGLint) height) {
+      bounding_box_y_max = (MGLint) height;
+    }
 
+    if (bounding_box_y_min < 0) {
+      bounding_box_y_min = 0;
+    }
+
+    if (bounding_box_x_max > (MGLint) width) {
+      bounding_box_x_max = (MGLint) width;
+    }
+
+    if (bounding_box_x_min < 0) {
+      bounding_box_x_min = 0;
+    }
     // Determine the area of 'current_triangle'. Since I am working in two-dimensions, for now I will store the x and y values from each vertex in a new variable.
     // vec3 vertex_one_to_vertex_two    = vec3(current_triangle.vertex_two.pos[0], current_triangle.vertex_two.pos[1], current_triangle.vertex_two.pos[2]) - vec3(current_triangle.vertex_one.pos[0], current_triangle.vertex_one.pos[1], current_triangle.vertex_one.pos[2]);
     //
@@ -225,12 +238,12 @@ void mglReadPixels(MGLsize width,
 
     cout << "area_of_triangle [" << triangle_list_index << "]: " << area_of_triangle/2 << endl << endl;
 
-    for (MGLint y_point = bounding_box_y_min; y_point <= bounding_box_y_max; ++y_point){
+    for (MGLint y_point   = bounding_box_y_min; y_point <= bounding_box_y_max; ++y_point){
       for (MGLint x_point = bounding_box_x_min; x_point <= bounding_box_x_max; ++x_point) {
 
         // the barycentric coordinates can be calculated as
-          vec3 vertex_one_to_point = vec3(x_point, y_point, 0) - vec3(current_triangle.vertex_one.pos[0], current_triangle.vertex_one.pos[1], 0);
-          vec3 vertex_two_to_point = vec3(x_point, y_point, 0) - vec3(current_triangle.vertex_two.pos[0], current_triangle.vertex_two.pos[1], 0);
+          vec3 vertex_one_to_point = vec3(x_point+.5, y_point+.5, 0) - vec3(current_triangle.vertex_one.pos[0], current_triangle.vertex_one.pos[1], 0);
+          vec3 vertex_two_to_point = vec3(x_point+.5, y_point+.5, 0) - vec3(current_triangle.vertex_two.pos[0], current_triangle.vertex_two.pos[1], 0);
 
           //       alpha = area(Point,vertex_two,vertex_three) / area(vertex_one,vertex_two,vertex_three)
           MGLfloat alpha = ((cross(vertex_two_to_vertex_three, vertex_two_to_point)).magnitude());    // I can divide by two here but there is really no need at this point.
@@ -243,10 +256,10 @@ void mglReadPixels(MGLsize width,
 
            // cout << "alpha , beta , gamma: " << alpha << " " <<  beta << " " << " " << gamma << endl; // Debugging
            //cout << "alpha + beta + gamma: " << alpha + beta + gamma << endl;                          // Debugging
-          if((alpha + beta + gamma) <= (area_of_triangle + 0.01f)) { // QUESTION: How do I get around this floating point rounding issue?
-            alpha/=area_of_triangle;
-            beta/=area_of_triangle;
-            gamma/=area_of_triangle;
+          if((alpha + beta + gamma) <= (area_of_triangle + 0.01f)) {
+            alpha /=area_of_triangle;
+            beta  /=area_of_triangle;
+            gamma /=area_of_triangle;
 
             MGLfloat alpha_real = (alpha/current_triangle.vertex_one.pos[3])/ ((alpha/current_triangle.vertex_one.pos[3]) + (beta/current_triangle.vertex_two.pos[3]) + (gamma/current_triangle.vertex_three.pos[3]));
 
@@ -264,8 +277,27 @@ void mglReadPixels(MGLsize width,
             //
             // Z_{i,j}=α_{i,j}z′_one + β_{i,j}*z′_two + γ_{i,j}z′_three
 
+            // if ((abs(current_triangle.vertex_one.pos[2]) > 1) || (abs(current_triangle.vertex_two.pos[2]) > 1)|| (abs(current_triangle.vertex_three.pos[2]) > 1) ) {
+            //   continue;
+            // }
+
             // perform z-interpolation
-            MGLfloat z_depth = alpha_real*current_triangle.vertex_one.pos[2] + beta_real*current_triangle.vertex_two.pos[2] + gamma_real*current_triangle.vertex_three.pos[2];
+            //MGLfloat z_depth = alpha_real*current_triangle.vertex_one.pos[2] + beta_real*current_triangle.vertex_two.pos[2] + gamma_real*current_triangle.vertex_three.pos[2];
+            MGLfloat z_depth = alpha*current_triangle.vertex_one.pos[2] + beta*current_triangle.vertex_two.pos[2] + gamma*current_triangle.vertex_three.pos[2];
+
+            if((z_depth) > 1) {
+              //cout << "z-clip too big\n";
+              //cout << z_depth << endl;
+              continue;
+            }
+
+            if(z_depth < -1) {
+
+              //cout << "z-clip too big\n";
+              continue;
+
+            }
+
             // cout << "z_depth" << z_depth;
 
             // check if the z -depth- of the pixel (which we get by
@@ -274,21 +306,26 @@ void mglReadPixels(MGLsize width,
             // at that pixel, is closest and we can color as we did before (set
             // data[i+j*width]) and update the min_z of the pixel.
 
-            if( (x_point < 0) || (y_point < 0) || ( width - x_point) <= 0 || ( width - x_point) >= width || (height - y_point) <= 1 || (height - y_point) > height || (abs(z_depth) > 1) ) {
+            //if( (x_point +.5 < 0) || (y_point +.5 < 0) || ( width - (x_point +.5)) <= 0 || ( width - (x_point +.5)) >= width || (height - (y_point+.5)) <= 1 || (height - (y_point+.5)) > height /*|| (z_depth) > 1 || (z_depth < -1)*/)  {
+            if( (x_point < 0) || (y_point < 0) || (y_point >= ((MGLint)height)) || (x_point >= ((MGLint)width)))  {
+
+              // if((z_depth) > 1 || (z_depth < -1)) {
+              //   cout << "clipped\n";
+              //   cout << z_depth << endl;
+              // }
+
               continue;
-              cout << "clipped\n";
-              cout << z_depth << endl;
             }
             //cout << "(height - y_point)" << (height - y_point) << endl;
 
             // Debuggin -- Seg fault from accessing z-buffer
             // cout << "x_point = " << x_point << ", y_point = " << y_point << ", width = " << width << ", height = " << height << endl;
             // cout  << "z_buffer.size() = " << z_buffer.size() << " Trying to access: " << x_point + y_point * width << endl;
-            if( z_depth <= z_buffer.at(x_point + y_point * width)) {
-              if (z_buffer.at(x_point + y_point * width) != 2) {
-                cout << "z_depth replaced" << endl;
-                cout << "old z-value: " << z_buffer.at(x_point + y_point * width) << ", new z-value: " <<  z_depth << endl;
-              }
+            if( z_depth < z_buffer.at(x_point + y_point * (MGLint)width)) {
+              // if (z_buffer.at(x_point + y_point * width) != 2) {
+              //   cout << "z_depth replaced" << endl;
+              //   cout << "old z-value: " << z_buffer.at(x_point + y_point * width) << ", new z-value: " <<  z_depth << endl;
+              // }
 
               // if( z_depth == z_buffer.at(x_point + y_point * width)) {
               //   cout << "z_depth collision" << endl;
@@ -313,7 +350,7 @@ void mglReadPixels(MGLsize width,
                //cout << "Color interpolation Values"  << endl << "R: " << color_interpolation[0] << " G: " << color_interpolation[1] << " B: " << color_interpolation[2] << endl;
 
 
-                *(data + x_point + y_point * width) = Make_Pixel(color_interpolation[0], color_interpolation[1],color_interpolation[2]);
+              *(data + x_point + y_point * width) = Make_Pixel(color_interpolation[0], color_interpolation[1],color_interpolation[2]);
 
             }
           }
