@@ -244,10 +244,15 @@ void mglReadPixels(MGLsize width,
            // cout << "alpha , beta , gamma: " << alpha << " " <<  beta << " " << " " << gamma << endl; // Debugging
            //cout << "alpha + beta + gamma: " << alpha + beta + gamma << endl;                          // Debugging
           if((alpha + beta + gamma) <= (area_of_triangle + 0.01f)) { // QUESTION: How do I get around this floating point rounding issue?
-            // perform z-interpolation
             alpha/=area_of_triangle;
             beta/=area_of_triangle;
             gamma/=area_of_triangle;
+
+            MGLfloat alpha_real = (alpha/current_triangle.vertex_one.pos[3])/ ((alpha/current_triangle.vertex_one.pos[3]) + (beta/current_triangle.vertex_two.pos[3]) + (gamma/current_triangle.vertex_three.pos[3]));
+
+            MGLfloat beta_real = (beta/current_triangle.vertex_two.pos[3])/ ((alpha/current_triangle.vertex_one.pos[3]) + (beta/current_triangle.vertex_two.pos[3]) + (gamma/current_triangle.vertex_three.pos[3]));
+
+            MGLfloat gamma_real = (gamma/current_triangle.vertex_three.pos[3])/ ((alpha/current_triangle.vertex_one.pos[3]) + (beta/current_triangle.vertex_two.pos[3]) + (gamma/current_triangle.vertex_three.pos[3]));
 
             // cout << "alpha:  " << alpha << ", beta: " <<  beta << ", gamma: " << gamma << endl; // Debugging
             // cout << "alpha + beta + gamma: " << alpha + beta + gamma << endl;                          // Debugging
@@ -259,26 +264,10 @@ void mglReadPixels(MGLsize width,
             //
             // Z_{i,j}=α_{i,j}z′_one + β_{i,j}*z′_two + γ_{i,j}z′_three
 
-            MGLfloat z_depth = alpha*current_triangle.vertex_one.pos[2] + beta*current_triangle.vertex_two.pos[2] + gamma*current_triangle.vertex_three.pos[2];
+            // perform z-interpolation
+            MGLfloat z_depth = alpha_real*current_triangle.vertex_one.pos[2] + beta_real*current_triangle.vertex_two.pos[2] + gamma_real*current_triangle.vertex_three.pos[2];
             // cout << "z_depth" << z_depth;
 
-            // Color interpolation
-            //vec3 color_interpolation((alpha*current_triangle.vertex_one.color + beta*current_triangle.vertex_two.color + gamma*current_triangle.vertex_three.color)*255);
-
-            // perspective color interpolation
-            // MGLfloat alpha_prime = (alpha * current_triangle.vertex_one.pos[3])/ (alpha*current_triangle.vertex_one.pos[3] + beta*current_triangle.vertex_two.pos[3] + gamma*current_triangle.vertex_three.pos[3]);
-            //
-            // MGLfloat beta_prime = (beta * current_triangle.vertex_two.pos[3])/ (alpha*current_triangle.vertex_one.pos[3] + beta*current_triangle.vertex_two.pos[3] + gamma*current_triangle.vertex_three.pos[3]);
-            //
-            // MGLfloat gamma_prime = (gamma * current_triangle.vertex_three.pos[3])/ (alpha*current_triangle.vertex_one.pos[3] + beta*current_triangle.vertex_two.pos[3] + gamma*current_triangle.vertex_three.pos[3]);
-            MGLfloat alpha_real = (alpha/current_triangle.vertex_one.pos[3])/ ((alpha/current_triangle.vertex_one.pos[3]) + (beta/current_triangle.vertex_two.pos[3]) + (gamma/current_triangle.vertex_three.pos[3]));
-
-            MGLfloat beta_real = (beta/current_triangle.vertex_two.pos[3])/ ((alpha/current_triangle.vertex_one.pos[3]) + (beta/current_triangle.vertex_two.pos[3]) + (gamma/current_triangle.vertex_three.pos[3]));
-
-            MGLfloat gamma_real = (gamma/current_triangle.vertex_three.pos[3])/ ((alpha/current_triangle.vertex_one.pos[3]) + (beta/current_triangle.vertex_two.pos[3]) + (gamma/current_triangle.vertex_three.pos[3]));
-
-            //cout << "alpha_real: " << alpha_real << ", beta_real: " << beta_real << ", gamma_real: " << gamma_real << endl;
-            vec3 color_interpolation((alpha_real*current_triangle.vertex_one.color + beta_real*current_triangle.vertex_two.color + gamma_real*current_triangle.vertex_three.color)*255);
             // check if the z -depth- of the pixel (which we get by
             // z-interpolation) is less than the min_z of that pixel
             // (that we get from our storage). If so, it means that triangle t,
@@ -287,6 +276,8 @@ void mglReadPixels(MGLsize width,
 
             if( (x_point < 0) || (y_point < 0) || ( width - x_point) <= 0 || ( width - x_point) >= width || (height - y_point) <= 1 || (height - y_point) > height || (abs(z_depth) > 1) ) {
               continue;
+              cout << "clipped\n";
+              cout << z_depth << endl;
             }
             //cout << "(height - y_point)" << (height - y_point) << endl;
 
@@ -294,18 +285,25 @@ void mglReadPixels(MGLsize width,
             // cout << "x_point = " << x_point << ", y_point = " << y_point << ", width = " << width << ", height = " << height << endl;
             // cout  << "z_buffer.size() = " << z_buffer.size() << " Trying to access: " << x_point + y_point * width << endl;
             if( z_depth <= z_buffer.at(x_point + y_point * width)) {
-              // if (z_buffer.at(x_point + y_point * width) != 2) {
-              //   cout << "z_depth replaced" << endl;
-              //   cout << "old z-value: " << z_buffer.at(x_point + y_point * width) << ", new z-value: " <<  z_depth << endl;
-              // }
-
-              if( z_depth == z_buffer.at(x_point + y_point * width)) {
-                cout << "z_depth collision" << endl;
+              if (z_buffer.at(x_point + y_point * width) != 2) {
+                cout << "z_depth replaced" << endl;
                 cout << "old z-value: " << z_buffer.at(x_point + y_point * width) << ", new z-value: " <<  z_depth << endl;
               }
 
+              // if( z_depth == z_buffer.at(x_point + y_point * width)) {
+              //   cout << "z_depth collision" << endl;
+              //   cout << "old z-value: " << z_buffer.at(x_point + y_point * width) << ", new z-value: " <<  z_depth << endl;
+              // }
+
 
               z_buffer.at(x_point + y_point * width) = z_depth;
+
+
+              // Color interpolation
+              //vec3 color_interpolation((alpha*current_triangle.vertex_one.color + beta*current_triangle.vertex_two.color + gamma*current_triangle.vertex_three.color)*255);
+
+              // perspective color interpolation
+              vec3 color_interpolation((alpha_real*current_triangle.vertex_one.color + beta_real*current_triangle.vertex_two.color + gamma_real*current_triangle.vertex_three.color)*255);
 
               // Debugging -- Vertex color
               // cout << "Color of Vertex One"  << endl << "R: " << current_triangle.vertex_one.color[0] * 255 << " G: " << current_triangle.vertex_one.color[1] * 255<< " B: " << current_triangle.vertex_one.color[2] * 255 << endl;
@@ -314,10 +312,7 @@ void mglReadPixels(MGLsize width,
               // Debugging -- Vertex color interpolation
                //cout << "Color interpolation Values"  << endl << "R: " << color_interpolation[0] << " G: " << color_interpolation[1] << " B: " << color_interpolation[2] << endl;
 
-              // Debugging -- Finding Seg Fault
-              // cout << "x_point = " << x_point << ", y_point = " << y_point << ", width = " << width << ", height = " << height << endl;
-              // cout << "x_point + y_point * width = " << x_point + y_point * width << endl;
-              // cout << "data + x_point + y_point * width = " << data + x_point + y_point * width << endl;
+
                 *(data + x_point + y_point * width) = Make_Pixel(color_interpolation[0], color_interpolation[1],color_interpolation[2]);
 
             }
@@ -326,6 +321,7 @@ void mglReadPixels(MGLsize width,
       }
     }
   }
+  z_buffer.clear(); // I dont think i need this but just in case.
 cout << "Out of mglReadPixels" << endl <<endl; // Debugging
 } // End of mglReadPixels
 
