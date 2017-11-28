@@ -150,14 +150,14 @@ void mglReadPixels(MGLsize width,
                    MGLsize height,
                    MGLpixel *data)
 {
-  cout << "In mglReadPixels\n";  // Debugging
+  //cout << "In mglReadPixels\n";  // Debugging
 
   // Resize z-buffer to match width times height
-  z_buffer.resize(width*height);
+  z_buffer.resize((MGLint)(width*height));
 
   // initialize min-z values in z_buffer
-  for (unsigned int i = 0; i < z_buffer.size(); i++) {
-    z_buffer.at(i) = 2;
+  for (unsigned int buffer_index = 0; buffer_index < z_buffer.size(); buffer_index++) {
+    z_buffer.at(buffer_index) = 2;
   }
 
   triangle current_triangle; // Used to store a copy of a triangle from a 'list_of_triangles'
@@ -205,16 +205,16 @@ void mglReadPixels(MGLsize width,
     MGLint bounding_box_y_min = (MGLint)floor(min(current_triangle.vertex_one.pos[1], min(current_triangle.vertex_two.pos[1],current_triangle.vertex_three.pos[1]))); // Find Ymin
     MGLint bounding_box_y_max = (MGLint)ceil(max(current_triangle.vertex_one.pos[1], max(current_triangle.vertex_two.pos[1],current_triangle.vertex_three.pos[1]))); // Find Ymax
 
-    if (bounding_box_y_max > (MGLint) height) {
-      bounding_box_y_max = (MGLint) height;
+    if (bounding_box_y_max >= (MGLint) height) {
+      bounding_box_y_max = (MGLint) height-1;
     }
 
     if (bounding_box_y_min < 0) {
       bounding_box_y_min = 0;
     }
 
-    if (bounding_box_x_max > (MGLint) width) {
-      bounding_box_x_max = (MGLint) width;
+    if (bounding_box_x_max >= (MGLint) width) {
+      bounding_box_x_max = (MGLint) width-1;
     }
 
     if (bounding_box_x_min < 0) {
@@ -236,7 +236,7 @@ void mglReadPixels(MGLsize width,
     // Compute the area 'current_triangle'
     MGLfloat area_of_triangle = ((cross(vertex_one_to_vertex_two, vertex_one_to_vertex_three)).magnitude()); // I can divide by two here but there is really no need at this point.
 
-    cout << "area_of_triangle [" << triangle_list_index << "]: " << area_of_triangle/2 << endl << endl;
+    //cout << "area_of_triangle [" << triangle_list_index << "]: " << area_of_triangle/2 << endl << endl;
 
     for (MGLint y_point   = bounding_box_y_min; y_point <= bounding_box_y_max; ++y_point){
       for (MGLint x_point = bounding_box_x_min; x_point <= bounding_box_x_max; ++x_point) {
@@ -282,21 +282,21 @@ void mglReadPixels(MGLsize width,
             // }
 
             // perform z-interpolation
-            //MGLfloat z_depth = alpha_real*current_triangle.vertex_one.pos[2] + beta_real*current_triangle.vertex_two.pos[2] + gamma_real*current_triangle.vertex_three.pos[2];
-            MGLfloat z_depth = alpha*current_triangle.vertex_one.pos[2] + beta*current_triangle.vertex_two.pos[2] + gamma*current_triangle.vertex_three.pos[2];
+            MGLfloat z_depth = alpha_real*current_triangle.vertex_one.pos[2] + beta_real*current_triangle.vertex_two.pos[2] + gamma_real*current_triangle.vertex_three.pos[2];
+            //MGLfloat z_depth = alpha*current_triangle.vertex_one.pos[2] + beta*current_triangle.vertex_two.pos[2] + gamma*current_triangle.vertex_three.pos[2];
 
-            if((z_depth) > 1) {
-              //cout << "z-clip too big\n";
-              //cout << z_depth << endl;
-              continue;
-            }
-
-            if(z_depth < -1) {
-
-              //cout << "z-clip too big\n";
-              continue;
-
-            }
+            // if((z_depth) > 1) {
+            //   //cout << "z-clip too big\n";
+            //   //cout << z_depth << endl;
+            //   continue;
+            // }
+            //
+            // if(z_depth < -1) {
+            //
+            //   //cout << "z-clip too big\n";
+            //   continue;
+            //
+            // }
 
             // cout << "z_depth" << z_depth;
 
@@ -307,59 +307,59 @@ void mglReadPixels(MGLsize width,
             // data[i+j*width]) and update the min_z of the pixel.
 
             //if( (x_point +.5 < 0) || (y_point +.5 < 0) || ( width - (x_point +.5)) <= 0 || ( width - (x_point +.5)) >= width || (height - (y_point+.5)) <= 1 || (height - (y_point+.5)) > height /*|| (z_depth) > 1 || (z_depth < -1)*/)  {
-            if( (x_point < 0) || (y_point < 0) || (y_point >= ((MGLint)height)) || (x_point >= ((MGLint)width)))  {
-
-              // if((z_depth) > 1 || (z_depth < -1)) {
-              //   cout << "clipped\n";
-              //   cout << z_depth << endl;
-              // }
-
-              continue;
-            }
+            // if( (x_point < 0) || (y_point < 0) || (y_point >= ((MGLint)height)) || (x_point >= ((MGLint)width)))  {
+            //
+            //   // if((z_depth) > 1 || (z_depth < -1)) {
+            //   //   cout << "clipped\n";
+            //   //   cout << z_depth << endl;
+            //   // }
+            //
+            //   continue;
+            // }
             //cout << "(height - y_point)" << (height - y_point) << endl;
 
+            if( (x_point >= 0) && (y_point >= 0) && (y_point < ((MGLint)height)) && (x_point < ((MGLint)width)) && (z_depth) <= 1 && (z_depth >= -1))  {
             // Debuggin -- Seg fault from accessing z-buffer
             // cout << "x_point = " << x_point << ", y_point = " << y_point << ", width = " << width << ", height = " << height << endl;
             // cout  << "z_buffer.size() = " << z_buffer.size() << " Trying to access: " << x_point + y_point * width << endl;
-            if( z_depth < z_buffer.at(x_point + y_point * (MGLint)width)) {
-              // if (z_buffer.at(x_point + y_point * width) != 2) {
-              //   cout << "z_depth replaced" << endl;
-              //   cout << "old z-value: " << z_buffer.at(x_point + y_point * width) << ", new z-value: " <<  z_depth << endl;
-              // }
+              if( z_depth < z_buffer.at(x_point + y_point * (MGLint)width)) {
+                // if (z_buffer.at(x_point + y_point * width) != 2) {
+                //   cout << "z_depth replaced" << endl;
+                //   cout << "old z-value: " << z_buffer.at(x_point + y_point * width) << ", new z-value: " <<  z_depth << endl;
+                // }
 
-              // if( z_depth == z_buffer.at(x_point + y_point * width)) {
-              //   cout << "z_depth collision" << endl;
-              //   cout << "old z-value: " << z_buffer.at(x_point + y_point * width) << ", new z-value: " <<  z_depth << endl;
-              // }
-
-
-              z_buffer.at(x_point + y_point * width) = z_depth;
+                // if( z_depth == z_buffer.at(x_point + y_point * width)) {
+                //   cout << "z_depth collision" << endl;
+                //   cout << "old z-value: " << z_buffer.at(x_point + y_point * width) << ", new z-value: " <<  z_depth << endl;
+                // }
 
 
-              // Color interpolation
-              //vec3 color_interpolation((alpha*current_triangle.vertex_one.color + beta*current_triangle.vertex_two.color + gamma*current_triangle.vertex_three.color)*255);
-
-              // perspective color interpolation
-              vec3 color_interpolation((alpha_real*current_triangle.vertex_one.color + beta_real*current_triangle.vertex_two.color + gamma_real*current_triangle.vertex_three.color)*255);
-
-              // Debugging -- Vertex color
-              // cout << "Color of Vertex One"  << endl << "R: " << current_triangle.vertex_one.color[0] * 255 << " G: " << current_triangle.vertex_one.color[1] * 255<< " B: " << current_triangle.vertex_one.color[2] * 255 << endl;
-              //*(data + x_point + y_point * width) = Make_Pixel(current_triangle.vertex_one.color[0] * 255,current_triangle.vertex_one.color[1] * 255,current_triangle.vertex_one.color[2] * 255 );
-
-              // Debugging -- Vertex color interpolation
-               //cout << "Color interpolation Values"  << endl << "R: " << color_interpolation[0] << " G: " << color_interpolation[1] << " B: " << color_interpolation[2] << endl;
+                z_buffer.at(x_point + y_point * width) = z_depth;
 
 
-              *(data + x_point + y_point * width) = Make_Pixel(color_interpolation[0], color_interpolation[1],color_interpolation[2]);
+                // Color interpolation
+                //vec3 color_interpolation((alpha*current_triangle.vertex_one.color + beta*current_triangle.vertex_two.color + gamma*current_triangle.vertex_three.color)*255);
 
-            }
+                // perspective color interpolation
+                vec3 color_interpolation((alpha_real*current_triangle.vertex_one.color + beta_real*current_triangle.vertex_two.color + gamma_real*current_triangle.vertex_three.color)*255);
+
+                // Debugging -- Vertex color
+                // cout << "Color of Vertex One"  << endl << "R: " << current_triangle.vertex_one.color[0] * 255 << " G: " << current_triangle.vertex_one.color[1] * 255<< " B: " << current_triangle.vertex_one.color[2] * 255 << endl;
+                //*(data + x_point + y_point * width) = Make_Pixel(current_triangle.vertex_one.color[0] * 255,current_triangle.vertex_one.color[1] * 255,current_triangle.vertex_one.color[2] * 255 );
+
+                // Debugging -- Vertex color interpolation
+                 //cout << "Color interpolation Values"  << endl << "R: " << color_interpolation[0] << " G: " << color_interpolation[1] << " B: " << color_interpolation[2] << endl;
+                *(data + x_point + y_point * width) = Make_Pixel(color_interpolation[0], color_interpolation[1],color_interpolation[2]);
+
+              }
           }
 
       }
     }
   }
+}
   z_buffer.clear(); // I dont think i need this but just in case.
-cout << "Out of mglReadPixels" << endl <<endl; // Debugging
+//cout << "Out of mglReadPixels" << endl <<endl; // Debugging
 } // End of mglReadPixels
 
 /**
@@ -452,7 +452,7 @@ void mglEnd()
 void mglVertex2(MGLfloat x,
                 MGLfloat y)
 {
-  cout << "In mglVertex2" << endl;  //Debugging
+//  cout << "In mglVertex2" << endl;  //Debugging
 
   vertex v;
 
@@ -481,7 +481,7 @@ void mglVertex2(MGLfloat x,
   list_of_vertices.push_back(v);
 
   // cout << "Final v.pos: " << v.pos << endl; //Debugging
-  cout << "Out mglVertex2" << endl <<endl;  //Debugging
+  //cout << "Out mglVertex2" << endl <<endl;  //Debugging
 }
 
 /**
@@ -492,7 +492,7 @@ void mglVertex3(MGLfloat x,
                 MGLfloat y,
                 MGLfloat z)
 {
-  cout << "In mglVertex3" << endl;  //Debugging
+//  cout << "In mglVertex3" << endl;  //Debugging
 
   vertex v;
 
@@ -517,7 +517,7 @@ void mglVertex3(MGLfloat x,
 
   list_of_vertices.push_back(v);
 
-  cout << "Out mglVertex3" << endl <<endl;  //Debugging
+  //cout << "Out mglVertex3" << endl <<endl;  //Debugging
 }
 
 /**
@@ -542,10 +542,10 @@ void mglMatrixMode(MGLmatrix_mode mode)
  */
 void mglPushMatrix()
 {
-  cout << "In mglPushMatrix" << endl; // Debugging
+//  cout << "In mglPushMatrix" << endl; // Debugging
   //cout << "\tget_current_matrix_stack().push_back(get_current_matrix())" << get_current_matrix() <<endl;
   get_current_matrix_stack().push_back(get_current_matrix());
-  cout << "Out mglPushMatrix" << endl << endl;
+//  cout << "Out mglPushMatrix" << endl << endl;
 }
 
 /**
@@ -554,10 +554,10 @@ void mglPushMatrix()
  */
 void mglPopMatrix()
 {
-  cout << "In mglPopMatrix" << endl; // Debugging
+//  cout << "In mglPopMatrix" << endl; // Debugging
   get_current_matrix() = get_current_matrix_stack().back();
   get_current_matrix_stack().pop_back();
-  cout << "Out mglPopMatrix" << endl << endl; // Debugging
+//  cout << "Out mglPopMatrix" << endl << endl; // Debugging
 }
 
 /**
@@ -565,7 +565,7 @@ void mglPopMatrix()
  */
 void mglLoadIdentity()
 {
-  cout << "In Load Identity" << endl;
+  //cout << "In Load Identity" << endl;
   // Create the identity_matrix
   get_current_matrix().make_zero();     // Start by setting the 'identity_matrix' to 0.
 
@@ -574,9 +574,9 @@ void mglLoadIdentity()
   get_current_matrix()(2,2)  = (MGLfloat)1;
   get_current_matrix()(3,3)  = (MGLfloat)1;
 
-  cout << "\tget_current_matrix(): " << get_current_matrix() << endl;
+//  cout << "\tget_current_matrix(): " << get_current_matrix() << endl;
 
-  cout << "Out Load Identity" << endl << endl;
+//  cout << "Out Load Identity" << endl << endl;
 }
 
 
@@ -595,7 +595,7 @@ void mglLoadIdentity()
  */
 void mglLoadMatrix(const MGLfloat *matrix)
 {
-  cout << "In mglLoadMatrix" << endl;  // Debugging
+  //cout << "In mglLoadMatrix" << endl;  // Debugging
 
   for (int i = 0; i < 16; ++i) {
     get_current_matrix().values[i] = *(matrix + i);
@@ -607,7 +607,7 @@ void mglLoadMatrix(const MGLfloat *matrix)
 //     }
 //   }
 // cout << get_current_matrix(); // Debugging
-  cout << "Out mglLoadMatrix" << endl << endl;  // Debugging
+  //cout << "Out mglLoadMatrix" << endl << endl;  // Debugging
 }
 
 /**
@@ -624,7 +624,7 @@ void mglLoadMatrix(const MGLfloat *matrix)
  */
 void mglMultMatrix(const MGLfloat *matrix)
 {
-  cout << "In mglMultMatrix" << endl; // Debugging
+  //cout << "In mglMultMatrix" << endl; // Debugging
   // // First Entry in matrix
   // get_current_matrix().values[0] = (get_current_matrix().values[0] * *(matrix)) + (get_current_matrix().values[4] * *(matrix + 1)) + (get_current_matrix().values[8] * *(matrix + 2)) + (get_current_matrix().values[12] * *(matrix + 3));
   //
@@ -655,7 +655,7 @@ void mglMultMatrix(const MGLfloat *matrix)
  // }
 
 
- cout << "Out mglMultMatrix" << endl << endl;  // Debugging
+ //cout << "Out mglMultMatrix" << endl << endl;  // Debugging
 }
 
 /**
@@ -666,7 +666,7 @@ void mglTranslate(MGLfloat x,
                   MGLfloat y,
                   MGLfloat z)
 {
-  cout << "In mglTranslate" << endl; // Debugging
+//  cout << "In mglTranslate" << endl; // Debugging
 
   mat4 translation_matrix;
 
@@ -691,7 +691,7 @@ void mglTranslate(MGLfloat x,
 
   // cout << "\tget_current_matrix()*translation_matrix = " << get_current_matrix() << endl; // Debugging
 
-  cout << "In mglTranslate" << endl << endl; // Debugging
+//  cout << "In mglTranslate" << endl << endl; // Debugging
 }
 
 /**
@@ -704,7 +704,7 @@ void mglRotate(MGLfloat angle,
                MGLfloat y,
                MGLfloat z)
 {
-  cout << "In mglRotate" << endl; // Debugging
+//  cout << "In mglRotate" << endl; // Debugging
   mat4 rotation_matrix;
 
   // convert degrees to radians
@@ -746,7 +746,7 @@ void mglRotate(MGLfloat angle,
   // get_current_matrix() = rotation_matrix * get_current_matrix();
   //cout << "\tget_current_matrix()*rotation_matrix = " << get_current_matrix() << endl; // Debugging
 
-  cout << "Out mglRotate" << endl << endl; // Debugging
+//  cout << "Out mglRotate" << endl << endl; // Debugging
 }
 
 /**
@@ -757,7 +757,7 @@ void mglScale(MGLfloat x,
               MGLfloat y,
               MGLfloat z)
 {
-  cout << "In mglScale" << endl; // Debugging
+//  cout << "In mglScale" << endl; // Debugging
   mat4 scale_matrix;
 
   scale_matrix.make_zero();
@@ -770,7 +770,7 @@ void mglScale(MGLfloat x,
   get_current_matrix() = get_current_matrix() * scale_matrix;
   // get_current_matrix() = scale_matrix * get_current_matrix();
 
-  cout << "In mglScale" << endl << endl; // Debugging
+//  cout << "In mglScale" << endl << endl; // Debugging
 }
 
 /**
@@ -784,7 +784,7 @@ void mglFrustum(MGLfloat left,
                 MGLfloat near,
                 MGLfloat far)
 {
-  cout << "In mglFrustum" << endl; // Debugging
+//  cout << "In mglFrustum" << endl; // Debugging
 
   mat4 perspective_matrix;
 
@@ -806,7 +806,7 @@ void mglFrustum(MGLfloat left,
   get_current_matrix() = get_current_matrix() * perspective_matrix;
   // get_current_matrix() = perspective_matrix * get_current_matrix();
   // cout << "\tperspective_matrix*get_current_matrix() = " << get_current_matrix() << endl; // Debugging
-  cout << "Out of mglFrustum" << endl << endl; // Debugging
+//  cout << "Out of mglFrustum" << endl << endl; // Debugging
 }
 
 /**
@@ -820,7 +820,7 @@ void mglOrtho(MGLfloat left,
               MGLfloat near,
               MGLfloat far)
 {
-  cout << "In mglOrtho" << endl; // Debugging
+//  cout << "In mglOrtho" << endl; // Debugging
   mat4 orthographic_matrix;
   orthographic_matrix.make_zero();
 
@@ -837,7 +837,7 @@ void mglOrtho(MGLfloat left,
   // get_current_matrix() = orthographic_matrix * get_current_matrix();
 
   // cout << "\tget_current_matrix() * orthographic_matrix: " << get_current_matrix() << endl; //Debugging
-  cout << "Out of mglOrtho" << endl << endl; // Debugging
+//  cout << "Out of mglOrtho" << endl << endl; // Debugging
 }
 
 /**
@@ -847,12 +847,12 @@ void mglColor(MGLfloat red,
               MGLfloat green,
               MGLfloat blue)
 {
-  cout << "In mglColor" << endl; // Debugging
+//  cout << "In mglColor" << endl; // Debugging
 
   // cout << "\tred: " << red << " green: " << green << " blue: " << blue << endl;
 
   current_color=vec3(red,green,blue);
 
-  cout << "Out of mglColor" << endl << endl; // Debugging
+//  cout << "Out of mglColor" << endl << endl; // Debugging
 
 }
